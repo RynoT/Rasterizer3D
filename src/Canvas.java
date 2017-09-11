@@ -8,14 +8,16 @@ import java.awt.*;
  */
 public class Canvas extends JFrame {
 
+    public static final int WIDTH = 800, HEIGHT = 600;
+
     private final Rasterizer rasterizer;
 
     private Canvas(){
         final Rasterizer.Config config = new Rasterizer.Config();
-        this.rasterizer = new Rasterizer(config);
+        this.rasterizer = new Rasterizer(Canvas.WIDTH, Canvas.HEIGHT, config);
 
         super.setResizable(false);
-        super.setSize(800, 600);
+        super.setSize(Canvas.WIDTH, Canvas.HEIGHT);
         super.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         final JPanel content = new JPanel(){
@@ -23,7 +25,7 @@ public class Canvas extends JFrame {
             protected void paintComponent(final Graphics g) {
                 super.paintComponent(g);
 
-                Canvas.this.rasterizer.render((Graphics2D)g, super.getWidth(), super.getHeight());
+                Canvas.this.rasterizer.render((Graphics2D)g);
             }
         };
         super.setContentPane(content);
