@@ -3,7 +3,6 @@ package rasterizer;
 import rasterizer.target.RenderTarget;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.concurrent.*;
 
 /**
