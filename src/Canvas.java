@@ -35,11 +35,6 @@ public class Canvas extends JFrame {
         new Thread(() -> {
             while(true){
                 content.repaint();
-                try {
-                    Thread.sleep(1L);
-                } catch(final InterruptedException e) {
-                    break;
-                }
             }
         }).start();
     }
