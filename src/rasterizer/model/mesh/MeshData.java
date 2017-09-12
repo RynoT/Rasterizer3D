@@ -12,16 +12,19 @@ public class MeshData {
 
     private final int mask, stride;
 
-    private final float[] data;
+    private final float[] data, buffer; //buffer is used by the renderer to store data changes without modifying the data
     private final int[] indices;
 
     private final int pointCount;
 
+    // Data must be in triangle topology
+    // Data must be in order (point, normal, texture) with normal and texture both being optional
     MeshData(final float[] data, final int[] indices, final int mask) {
         assert data != null && indices != null;
         this.mask = mask;
         this.data = data;
         this.indices = indices;
+        this.buffer = new float[data.length];
 
         assert indices.length % 3 == 0 : "Invalid index data";
         assert this.hasPointData() : "All models must have point data";
@@ -52,6 +55,10 @@ public class MeshData {
 
     public float[] getData() {
         return this.data;
+    }
+
+    public float[] getBuffer() {
+        return this.buffer;
     }
 
     public int getPointCount() {

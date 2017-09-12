@@ -1,4 +1,4 @@
-package rasterizer.target;
+package rasterizer.graphics.target;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -17,6 +17,8 @@ public class RenderTarget extends BufferedImage {
 
     private boolean flushed = false;
     private final Rectangle flushBounds;
+
+    protected boolean disableCustom = false;
 
     public RenderTarget(final int width, final int height) {
         super(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -96,7 +98,7 @@ public class RenderTarget extends BufferedImage {
 
     public void render(final Graphics2D g2d) {
         // Check to see if our buffered image contains the latest color data.
-        if(!this.flushed) {
+        if(!this.flushed && !this.disableCustom) {
             Object pixel = null;
             final ColorModel model = super.getColorModel();
             final WritableRaster raster = super.getRaster();
@@ -114,14 +116,6 @@ public class RenderTarget extends BufferedImage {
                     raster.setDataElements(i, j, pixel = model.getDataElements(argb, pixel));
                 }
             }
-
-//            for(int k = 0, w = 0; k < this.data.length; k += RenderTarget.RGBA_FLOAT_LENGTH, w++){
-//                final int i = w % super.getWidth(), j = w / super.getWidth();
-//                final int argb = ((int) (this.data[k + 3] * 255.0f) << 24) | ((int) (this.data[k] * 255.0f) << 16)
-//                        | ((int) (this.data[k + 1] * 255.0f) << 8) | ((int) (this.data[k + 2] * 255.0f));
-//                // Set pixel color. Don't bother with #setRGB to avoid needlessly acquiring the images monitor every call.
-//                raster.setDataElements(i, j, pixel = model.getDataElements(argb, pixel));
-//            }
             this.flushed = true;
         }
         g2d.drawImage(this, 0, 0, null);

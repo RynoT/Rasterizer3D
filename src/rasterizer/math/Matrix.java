@@ -65,6 +65,11 @@ public class Matrix {
         this.elements[column + row * this.columnCount] = value;
     }
 
+    public Matrix set(final Matrix matrix){
+        assert matrix != null;
+        return this.fill(matrix.elements);
+    }
+
     public Matrix setIdentity() {
         return this.setDiagonal(1.0f);
     }
@@ -269,7 +274,7 @@ public class Matrix {
     public static Matrix setToPerspectiveMatrix(final Matrix matrix, final float width, final float height,
                                                 final float fov, final float far, final float near) {
         assert matrix.rowCount == 4 && matrix.columnCount == 4;
-        final float aspect = width / height;
+        final float aspect = 1.0f;//width / height;
         final float tfov = 1.0f / MathUtils.tan((fov / 2.0f) * MathUtils.DEG_TO_RAD);
         return matrix.fill(new float[]{
                 tfov / aspect, 0.0f, 0.0f, 0.0f,

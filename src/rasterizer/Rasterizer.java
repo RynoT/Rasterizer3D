@@ -1,8 +1,13 @@
 package rasterizer;
 
-import rasterizer.target.RenderTarget;
+import rasterizer.graphics.layer.Layer;
+import rasterizer.graphics.target.RenderTarget;
 
 import java.awt.*;
+import java.awt.image.BufferStrategy;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 
 /**
@@ -14,10 +19,13 @@ public class Rasterizer {
     private final Config config;
 
     private final ForkJoinPool pool;
-    private final RenderTarget backTarget;
+    private final BufferedImage buffer;
+    private Color backgroundColor = new Color(5, 10, 15);
 
     private long lastFrameTime = 0L;
     private float delta, fps;
+
+    private final List<Layer> layers = new ArrayList<>();
 
     public Rasterizer(final int width, final int height) {
         this(width, height, new Config());
@@ -27,9 +35,7 @@ public class Rasterizer {
         this.config = config;
 
         this.pool = new ForkJoinPool(Math.max(config.threadCount, 1));
-
-        this.backTarget = new RenderTarget(width, height);
-        this.backTarget.clear();
+        this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
     public float getFps() {
@@ -44,20 +50,42 @@ public class Rasterizer {
         this.pool.shutdown();
     }
 
+    public void addLayer(final Layer layer) {
+        this.layers.add(layer);
+    }
+
+    public void removeLayer(final Layer layer) {
+        this.layers.remove(layer);
+    }
+
+    public void setBackgroundColor(final Color color) {
+        this.backgroundColor = color;
+    }
+
     public void render(final Graphics2D g2d) {
         if(this.lastFrameTime == 0L) {
             this.lastFrameTime = System.nanoTime();
         }
 
         // Render
-        for(int j = 0; j < this.backTarget.getHeight(); j += this.config.segmentSize.height) {
-            for(int i = 0; i < this.backTarget.getWidth(); i += this.config.segmentSize.width) {
+        final Graphics2D bg2d = this.buffer.createGraphics();
+        bg2d.setBackground(this.backgroundColor);
+        bg2d.clearRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
 
-            }
+        final RenderAction[] actions = new RenderAction[this.layers.size()];
+        for(int i = 0; i < this.layers.size(); i++) {
+            this.pool.execute(actions[i] = new RenderAction(this.layers.get(i)));
         }
-        this.pool.execute(new RenderAction(0, 0, 0, 0));
+        // Wait for render to complete and then draw to back
+        for(final RenderAction action : actions) {
+            action.join();
 
-        this.backTarget.render(g2d);
+            action.layer.render(bg2d);
+        }
+
+        //TODO ditch the back buffer
+        bg2d.dispose();
+        g2d.drawImage(this.buffer, 0, 0, null);
 
         // Calculate delta
         long time = System.nanoTime();
@@ -89,19 +117,19 @@ public class Rasterizer {
 
         // Rendering thread count (<= 1 is 1)
         public int threadCount = Runtime.getRuntime().availableProcessors() - 1;
-
-        // How large each render segment should be
-        public Dimension segmentSize = new Dimension(50, 50);
     }
 
     private class RenderAction extends RecursiveAction {
 
-        public RenderAction(final int x, final int y, final int width, final int height) {
+        private final Layer layer;
 
+        RenderAction(final Layer layer) {
+            this.layer = layer;
         }
 
         @Override
         protected void compute() {
+            this.layer.render();
         }
     }
 }
