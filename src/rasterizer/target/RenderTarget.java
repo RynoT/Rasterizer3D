@@ -13,7 +13,7 @@ public class RenderTarget extends BufferedImage {
     public static final int RGBA_FLOAT_LENGTH = 4; // r, g, b, a
 
     private final float[] data;
-    private final float[] clearColor = new float[]{0.0f, 0.0f, 0.0f, 1.0f};
+    private final float[] clearColor = new float[]{0.02f, 0.03f, 0.04f, 1.0f};
 
     private boolean flushed = false;
     private final Rectangle flushBounds;
@@ -115,10 +115,6 @@ public class RenderTarget extends BufferedImage {
                 }
             }
 
-
-//            Object pixel = null;
-//            final ColorModel model = super.getColorModel();
-//            final WritableRaster raster = super.getRaster();
 //            for(int k = 0, w = 0; k < this.data.length; k += RenderTarget.RGBA_FLOAT_LENGTH, w++){
 //                final int i = w % super.getWidth(), j = w / super.getWidth();
 //                final int argb = ((int) (this.data[k + 3] * 255.0f) << 24) | ((int) (this.data[k] * 255.0f) << 16)
@@ -126,7 +122,6 @@ public class RenderTarget extends BufferedImage {
 //                // Set pixel color. Don't bother with #setRGB to avoid needlessly acquiring the images monitor every call.
 //                raster.setDataElements(i, j, pixel = model.getDataElements(argb, pixel));
 //            }
-            // Optimization variable. We only need to flush to the raster if changes have been made, otherwise we can achieve the same effect by doing nothing.
             this.flushed = true;
         }
         g2d.drawImage(this, 0, 0, null);
