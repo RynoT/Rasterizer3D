@@ -63,10 +63,14 @@ public class Layer3D extends Layer {
         assert this.zBuffer != null : "Projection matrix probably not set";
         final Matrix temp4x1 = Matrix.TEMP_4x1.get(), temp4x4 = Matrix.TEMP_4x4.get();
 
+        super.clear();
         Arrays.fill(this.zBuffer, this.far);
 
         final Matrix projectionView = this.getProjectionView();
         for(final Model model : this.models) {
+            if(model.getMesh() == null) {
+                continue;
+            }
             final MeshData meshData = model.getMesh().getData();
 
             final int stride = meshData.getStride();
@@ -113,19 +117,21 @@ public class Layer3D extends Layer {
                 final float px3 = buffer[idx3], py3 = buffer[idx3 + 1], pz3 = buffer[idx3 + 2];
 
                 // Check near/far
-                if((pz1 < this.near && pz2 < this.near && pz3 < this.near) || (pz1 > this.far && pz2 > this.far && pz3 > this.far)){
+                if((pz1 < this.near && pz2 < this.near && pz3 < this.near) || (pz1 > this.far && pz2 > this.far && pz3 > this.far)) {
                     continue;
                 }
 
                 // Get triangle (rectangular) bounds. The bounds are also limited to fit within viewport (so no out-of-bounds pixels are iterated over)
-                final int maxX = (int) Math.min(Math.max(px1, Math.max(px2, px3)), super.getWidth()),
-                        minX = (int) Math.max(Math.min(px1, Math.min(px2, px3)), 0);
-                final int maxY = (int) Math.min(Math.max(py1, Math.max(py2, py3)), super.getHeight()),
-                        minY = (int) Math.max(Math.min(py1, Math.min(py2, py3)), 0);
+                final int maxX = Math.round(Math.min(Math.max(px1, Math.max(px2, px3)), super.getWidth())),
+                        minX = Math.round(Math.max(Math.min(px1, Math.min(px2, px3)), 0.0f));
+                final int maxY = Math.round(Math.min(Math.max(py1, Math.max(py2, py3)), super.getHeight())),
+                        minY = Math.round(Math.max(Math.min(py1, Math.min(py2, py3)), 0.0f));
+
+                super.prepareRGBA(maxX, maxY, minX, minY);
 
                 // Loop through each pixel in the bounds
-                for(int j = minY; j < maxY; j++) {
-                    for(int i = minX; i < maxX; i++) {
+                for(int j = minY; j <= maxY; j++) {
+                    for(int i = minX; i <= maxX; i++) {
                         // Check to see if point is inside triangle using barycentric coordinates
                         final float pw1 = ((py2 - py3) * (i - px3) + (px3 - px2) * (j - py3))
                                 / ((py2 - py3) * (px1 - px3) + (px3 - px2) * (py1 - py3));
@@ -146,20 +152,24 @@ public class Layer3D extends Layer {
 
                         final float z = (pz1 * pw1 + pz2 * pw2 + pz3 * pw3);
                         // Check to see if this pixel is visible (according to near, far, and the depth buffer)
-                        if(z < this.near || z > this.far){
+                        if(z < this.near || z > this.far) {
                             continue;
                         }
                         final int depthIndex = i + j * super.getWidth();
-                        if(z > this.zBuffer[depthIndex]){
-                            //continue;
+                        if(z > this.zBuffer[depthIndex]) {
+                            continue;
                         }
 
                         // If we get here, we are going to render the pixel. Lets update the depth buffer first
                         this.zBuffer[depthIndex] = z;
-                        int rgb = (int)Math.min(255, Math.max(0, (this.far - this.near) / z));
-                        super.setRGB(i, j, new Color(rgb, rgb, rgb, 255).getRGB());
+                        float rgb = 0.8f;//Math.max(0.0f, Math.min(1.0f, Math.abs(i - px1) / 50));
+                        super.setRGBA(new float[]{rgb, rgb, rgb, 1.0f}, i, j);
                     }
                 }
+            }
+            // To avoid setting as many unused pixels as possible, we will flush the rgba after each model has been rendered if it requests so.
+            if(model.flushPostRender) {
+                super.flushRGBA(model.flushDisplay);
             }
         }
     }

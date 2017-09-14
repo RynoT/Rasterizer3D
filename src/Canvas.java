@@ -1,5 +1,6 @@
 import rasterizer.Rasterizer;
 import rasterizer.graphics.layer.Layer3D;
+import rasterizer.math.MathUtils;
 import rasterizer.model.Model;
 import rasterizer.model.mesh.basic.CubeMesh;
 import rasterizer.model.mesh.basic.QuadMesh;
@@ -21,16 +22,21 @@ public class Canvas extends JFrame {
         this.rasterizer = new Rasterizer(Canvas.WIDTH, Canvas.HEIGHT, config);
 
         final Layer3D layer = new Layer3D(Canvas.WIDTH, Canvas.HEIGHT);
+        layer.flushDisplay = true;
         layer.setToPerspectiveProjection(45.0f, 1000.0f, 0.0001f);
         //layer.setToOrthographicProjection(1000.0f, 0.0001f);
 
-//        final Model quadModel = new Model(new QuadMesh(100.0f, 100.0f, false));
-//        quadModel.setPosition(10.0f, 10.0f, 0.0f);
-//        layer.addModel(quadModel);
-
-        final Model cubeModel = new Model(new CubeMesh(100.0f, 100.0f, 100.0f));
+        //final Model cubeModel = new Model(new CubeMesh(100.0f, 100.0f, 100.0f));
+        final Model cubeModel = new Model(new QuadMesh(50.0f, 50.0f, true));
+        //cubeModel.flushDisplay = true;
+        cubeModel.flushPostRender = true;
         cubeModel.setPosition(100.0f, 100.0f, 0.0f);
         layer.addModel(cubeModel);
+
+        final Model cubeModel2 = new Model(new QuadMesh(50.0f, 50.0f, true));
+        cubeModel2.flushPostRender = true;
+        cubeModel2.setPosition(200.0f, 100.0f, 0.0f);
+        layer.addModel(cubeModel2);
 
         this.rasterizer.addLayer(layer);
 
@@ -43,6 +49,10 @@ public class Canvas extends JFrame {
             protected void paintComponent(final Graphics g) {
                 super.paintComponent(g);
 
+                float dd = 10 * MathUtils.DEG_TO_RAD * rasterizer.getDelta();
+                cubeModel.rotate(0.0f, 0.0f, dd);
+                //cubeModel.setRotation(0,0,45*MathUtils.DEG_TO_RAD);
+
                 Canvas.this.rasterizer.render((Graphics2D)g);
                 Canvas.super.setTitle("FPS: " + String.format("%.1f", Canvas.this.rasterizer.getFps()));
             }
@@ -53,8 +63,12 @@ public class Canvas extends JFrame {
 
         new Thread(() -> {
             while(true){
-                cubeModel.rotate(0.0f, 0.1f, 0.0f);
                 content.repaint();
+                try {
+                    Thread.sleep(5L);
+                } catch(InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }).start();
     }

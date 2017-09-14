@@ -9,6 +9,8 @@ public final class MathUtils {
     public static final float PI2 = MathUtils.PI * 2.0f;
     public static final float PI_HALF = MathUtils.PI / 2.0f;
 
+    public static final float EPSILON = 0.00001f;
+
     public static final float RAD_TO_DEG = 180.0f / MathUtils.PI;
     public static final float DEG_TO_RAD = MathUtils.PI / 180.0f;
 
@@ -20,6 +22,14 @@ public final class MathUtils {
     private MathUtils() {
     }
 
+    public static boolean equals(final float a, final float b) {
+        return MathUtils.equals(a, b, MathUtils.EPSILON);
+    }
+
+    public static boolean equals(final float a, final float b, final float epsilon) {
+        return a == b || Math.abs(a - b) < epsilon;
+    }
+
     public static float sin(final float radians) {
         return MathUtils.SINE_TABLE[(int) (radians * (MathUtils.SIN_COUNT / MathUtils.PI2)) & MathUtils.SIN_MASK];
     }
@@ -29,7 +39,7 @@ public final class MathUtils {
         return MathUtils.SINE_TABLE[(int) ((radians + MathUtils.PI_HALF) * (MathUtils.SIN_COUNT / MathUtils.PI2)) & MathUtils.SIN_MASK];
     }
 
-    public static float tan(final float radians){
+    public static float tan(final float radians) {
         return (float) Math.tan(radians); //TODO
     }
 
