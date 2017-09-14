@@ -71,8 +71,8 @@ public class RenderTarget extends BufferedImage {
         if(this.flushed) {
             this.flushBounds.setBounds(x, y, 1, 1);
             this.flushed = false;
-        } else if(x < this.flushBounds.x || x > this.flushBounds.x + this.flushBounds.width
-                || y < this.flushBounds.y || y > this.flushBounds.y + this.flushBounds.height) {
+        } else if(x < this.flushBounds.x || x >= this.flushBounds.x + this.flushBounds.width
+                || y < this.flushBounds.y || y >= this.flushBounds.y + this.flushBounds.height) {
             int x1 = this.flushBounds.x, y1 = this.flushBounds.y;
             int x2 = x1 + this.flushBounds.width, y2 = y1 + this.flushBounds.height;
 

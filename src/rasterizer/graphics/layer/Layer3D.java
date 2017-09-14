@@ -1,7 +1,9 @@
 package rasterizer.graphics.layer;
 
+import rasterizer.graphics.pass.FragmentPass;
 import rasterizer.math.Matrix;
 import rasterizer.model.Model;
+import rasterizer.model.mesh.Mesh;
 import rasterizer.model.mesh.MeshData;
 
 import java.awt.*;
@@ -66,13 +68,21 @@ public class Layer3D extends Layer {
         super.clear();
         Arrays.fill(this.zBuffer, this.far);
 
+        final float[] rgbaBuffer = new float[4];
         final Matrix projectionView = this.getProjectionView();
+        final FragmentPass.FragmentParameters fParams = FragmentPass.getParameters();
         for(final Model model : this.models) {
-            if(model.getMesh() == null) {
+            final Mesh mesh = model.getMesh();
+            if(mesh == null) {
                 continue;
             }
-            final MeshData meshData = model.getMesh().getData();
+            final FragmentPass fPass = mesh.getFragmentPass();
+            if(fPass == null) {
+                continue; // no fragment pass means nothing can be rendered
+            }
+            fParams.material = mesh.getMaterial();
 
+            final MeshData meshData = mesh.getData();
             final int stride = meshData.getStride();
             final int[] indices = meshData.getIndices();
             final float[] data = meshData.getData(), buffer = meshData.getBuffer();
@@ -118,7 +128,7 @@ public class Layer3D extends Layer {
 
                 // Check near/far
                 if((pz1 < this.near && pz2 < this.near && pz3 < this.near) || (pz1 > this.far && pz2 > this.far && pz3 > this.far)) {
-                    continue;
+                    //continue;
                 }
 
                 // Get triangle (rectangular) bounds. The bounds are also limited to fit within viewport (so no out-of-bounds pixels are iterated over)
@@ -153,7 +163,7 @@ public class Layer3D extends Layer {
                         final float z = (pz1 * pw1 + pz2 * pw2 + pz3 * pw3);
                         // Check to see if this pixel is visible (according to near, far, and the depth buffer)
                         if(z < this.near || z > this.far) {
-                            continue;
+                            //continue;
                         }
                         final int depthIndex = i + j * super.getWidth();
                         if(z > this.zBuffer[depthIndex]) {
@@ -162,8 +172,23 @@ public class Layer3D extends Layer {
 
                         // If we get here, we are going to render the pixel. Lets update the depth buffer first
                         this.zBuffer[depthIndex] = z;
-                        float rgb = 0.8f;//Math.max(0.0f, Math.min(1.0f, Math.abs(i - px1) / 50));
-                        super.setRGBA(new float[]{rgb, rgb, rgb, 1.0f}, i, j);
+
+                        // Setup fragment pass parameters
+                        fParams.point[0] = i;
+                        fParams.point[1] = j;
+                        fParams.point[2] = z;
+
+                        if(fParams.hasNormal = meshData.hasNormalData()) {
+
+                        }
+                        if(fParams.hasTexture = meshData.hasTextureData()) {
+                            final int offset = MeshData.POINT_LENGTH + (fParams.hasNormal ? MeshData.NORMAL_LENGTH : 0);
+                            fParams.texture[0] = buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3;
+                            fParams.texture[1] = buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3;
+                        }
+
+                        fPass.pass(rgbaBuffer);
+                        super.setRGBA(rgbaBuffer, i, j);
                     }
                 }
             }
