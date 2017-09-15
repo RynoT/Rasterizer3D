@@ -7,7 +7,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 /**
- * Created by Ryan Thomson on 11/01/2017.
+ * Created by Ryan on 12/09/2017.
  */
 public class MeshMaterial {
 

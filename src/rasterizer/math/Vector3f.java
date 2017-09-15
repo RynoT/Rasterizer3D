@@ -1,7 +1,7 @@
 package rasterizer.math;
 
 /**
- * Created by Ryan Thomson on 27/02/2017.
+ * Created by Ryan on 27/02/2017.
  */
 public class Vector3f extends Vector2f {
 

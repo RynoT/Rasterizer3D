@@ -3,12 +3,9 @@ package rasterizer.math;
 import java.util.Arrays;
 
 /**
- * Created by Ryan Thomson on 27/02/2017.
+ * Created by Ryan on 27/02/2017.
  */
 public class Matrix {
-
-    public static final ThreadLocal<Matrix> TEMP_4x1 = new LocalTempMatrix(4, 1);
-    public static final ThreadLocal<Matrix> TEMP_4x4 = new LocalTempMatrix(4, 4);
 
     private final int rowCount, columnCount;
     private final float[] elements;

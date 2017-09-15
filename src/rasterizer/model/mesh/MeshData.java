@@ -1,9 +1,7 @@
 package rasterizer.model.mesh;
 
 /**
- * Created by Ryan Thomson on 07/01/2017.
- * <p>
- * Data must be CCW (vertex, normal, texture) and indices must be triangles to render properly (+z is depth (where 0.0 is ui plane), +y is up screen)
+ * Created by Ryan on 12/09/2017.
  */
 public class MeshData {
 

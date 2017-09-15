@@ -1,18 +1,15 @@
 import rasterizer.Rasterizer;
 import rasterizer.graphics.layer.Layer3D;
-import rasterizer.graphics.pass.FColorPass;
 import rasterizer.graphics.pass.FTexturePass;
 import rasterizer.graphics.pass.FragmentPass;
 import rasterizer.math.MathUtils;
 import rasterizer.model.Model;
 import rasterizer.model.mesh.MeshMaterial;
 import rasterizer.model.mesh.basic.CubeMesh;
-import rasterizer.model.mesh.basic.QuadMesh;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 
 /**
@@ -31,8 +28,8 @@ public class Canvas extends JFrame {
         this.rasterizer = new Rasterizer(Canvas.WIDTH, Canvas.HEIGHT, config);
 
         final Layer3D layer = new Layer3D(Canvas.WIDTH, Canvas.HEIGHT);
-        //layer._processTextureData = false;
-        //layer._displayFlush = true;
+        layer._render_async = true;
+        layer._render_async_threadsafe = true;
         //layer.setToPerspectiveProjection(45.0f, 100000.0f, 0.1f);
         layer.setToOrthographicProjection(1000.0f, 0.1f);
 
@@ -43,8 +40,6 @@ public class Canvas extends JFrame {
         } catch(IOException e) {
             e.printStackTrace();
         }
-        //cubeModel.flushDisplay = true;
-        cubeModel._flushPostRender = true;
         cubeModel.setPosition(794 / 2, 571 / 2, 250.0f);
         cubeModel.getMesh().setFragmentPass(texturePass);
         layer.addModel(cubeModel);
@@ -61,7 +56,7 @@ public class Canvas extends JFrame {
                 super.paintComponent(g);
 
                 float dd = 25 * MathUtils.DEG_TO_RAD * rasterizer.getDelta();
-                cubeModel.rotate(dd, dd,dd);
+                cubeModel.rotate(dd, dd,0);
 //                cubeModel.translate(0,0,-120*rasterizer.getDelta());
                 //cubeModel.setRotation(-60*MathUtils.DEG_TO_RAD,0,0);
 
@@ -78,7 +73,7 @@ public class Canvas extends JFrame {
             while(true) {
                 content.repaint();
                 try {
-                    Thread.sleep(5L);
+                    Thread.sleep(4L);
                 } catch(InterruptedException e) {
                     e.printStackTrace();
                 }

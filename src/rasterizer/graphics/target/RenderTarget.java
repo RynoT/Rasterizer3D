@@ -12,14 +12,19 @@ public class RenderTarget extends BufferedImage {
 
     public static final int RGBA_FLOAT_LENGTH = 4; // r, g, b, a
 
-    public boolean _displayFlush = false;
-    public boolean _disableCustomRGBA = false;
+    public boolean _render_async = true; // It is up to subclasses to implement async
+    public boolean _display_flush = false;
+    public boolean _display_chunks = false;
+    public boolean _disable_custom_rgba = false;
+    public float _render_chunk_size = 0.25f; // Percentage size of each chunk (0.0f - 1.0f both inclusive). Percentage is of screen dimensions.
 
     private final float[] data;
     private final float[] clearColor = new float[]{0.02f, 0.03f, 0.04f, 1.0f};
 
     private boolean flushed = false;
-    private final Rectangle flushBounds/*, lastFlushBounds = new Rectangle()*/;
+    private final Rectangle flushBounds;
+
+    private final Graphics2D graphics;
 
     public RenderTarget(final int width, final int height) {
         super(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -27,6 +32,8 @@ public class RenderTarget extends BufferedImage {
         assert width > 0 && height > 0 : "Width and Height must both be > 0";
         this.data = new float[width * height * RenderTarget.RGBA_FLOAT_LENGTH];
         this.flushBounds = new Rectangle(0, 0, width, height);
+
+        this.graphics = super.createGraphics();
     }
 
     public static Color asColor(final float[] rgba) {
@@ -92,10 +99,6 @@ public class RenderTarget extends BufferedImage {
     }
 
     public void setRGBA(final float[] rgba, final int x, final int y) {
-//        assert rgba != null && rgba.length == 4;
-//        assert x >= 0 && x < super.getWidth();
-//        assert y >= 0 && y < super.getHeight();
-
         final int index = (x + y * super.getWidth()) * RenderTarget.RGBA_FLOAT_LENGTH;
         this.data[index] = rgba[0];
         this.data[index + 1] = rgba[1];
@@ -120,48 +123,12 @@ public class RenderTarget extends BufferedImage {
         g2d.dispose();
     }
 
-//    public void clearLast(){
-//        this.clearLast(this.clearColor);
-//    }
-//
-//    public void clearLast(final float[] rgba) {
-//        assert rgba != null && rgba.length == 4;
-//        final int x = this.lastFlushBounds.x, y = this.lastFlushBounds.y, w = this.lastFlushBounds.width, h = this.lastFlushBounds.height;
-//        for(int j = y; j < y + h; j++) {
-//            if(j >= super.getHeight()) {
-//                break;
-//            }
-//            for(int i = x; i < x + w; i++) {
-//                if(i >= super.getWidth()) {
-//                    break;
-//                }
-//                final int k = (i + j * super.getWidth()) * RenderTarget.RGBA_FLOAT_LENGTH;
-//                if(k >= this.data.length) {
-//                    break;
-//                }
-//                System.arraycopy(rgba, 0, this.data, k, rgba.length);
-//            }
-//        }
-//        final Graphics2D g2d = super.createGraphics();
-//        g2d.setBackground(new Color(rgba[0], rgba[1], rgba[2], rgba[3]));
-//        g2d.clearRect(x, y, w, h);
-//
-//        // We can't render this or else it will no longer be clear :/
-////        if(this._displayFlush) {
-////            g2d.setColor(Color.ORANGE);
-////            g2d.drawRect(x, y, w, h);
-////        }
-//        g2d.dispose();
-//
-//        this.lastFlushBounds.x = -1;
-//    }
-
     public void flushRGBA() {
-        this.flushRGBA(this._displayFlush);
+        this.flushRGBA(this._display_flush);
     }
 
     public void flushRGBA(final boolean flushDisplay) {
-        if(!this.flushed && !this._disableCustomRGBA) {
+        if(!this.flushed && !this._disable_custom_rgba) {
             Object pixel = null;
             final ColorModel model = super.getColorModel();
             final WritableRaster raster = super.getRaster();
@@ -187,17 +154,22 @@ public class RenderTarget extends BufferedImage {
                 }
             }
             this.flushed = true;
-//            if(this.lastFlushBounds.x == -1) {
-//                this.lastFlushBounds.setBounds(this.flushBounds);
-//            } else {
-//                this.lastFlushBounds.add(this.flushBounds);
-//            }
 
-            if(flushDisplay || this._displayFlush) {
-                final Graphics2D bg2d = super.createGraphics();
-                bg2d.setColor(Color.RED);
-                bg2d.drawRect(x, y, w, h);
-                bg2d.dispose();
+            if(flushDisplay || this._display_flush) {
+                this.graphics.setColor(Color.RED);
+                this.graphics.drawRect(x, y, w, h);
+            }
+            if(this._display_chunks) {
+                this.graphics.setColor(Color.ORANGE);
+
+                final int dw = (int)(super.getWidth() * this._render_chunk_size);
+                for(int i = dw; i < super.getWidth(); i += dw) {
+                    this.graphics.drawLine(i, 0, i, super.getHeight());
+                }
+                final int dh = (int)(super.getHeight() * this._render_chunk_size);
+                for(int j = dh; j < super.getHeight(); j += dh) {
+                    this.graphics.drawLine(0, j, super.getWidth(), j);
+                }
             }
         }
     }

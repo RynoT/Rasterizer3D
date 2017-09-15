@@ -1,6 +1,7 @@
 package rasterizer;
 
 import rasterizer.graphics.layer.Layer;
+import rasterizer.graphics.layer.Layer3D;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -85,6 +86,12 @@ public class Rasterizer {
         for(final RenderAction action : actions) {
             action.join();
 
+            if(action.actions != null) {
+                for(final RecursiveAction next : action.actions) {
+                    next.join();
+                }
+            }
+
             action.layer.render(bg2d);
         }
 
@@ -135,6 +142,7 @@ public class Rasterizer {
     private class RenderAction extends RecursiveAction {
 
         private final Layer layer;
+        private List<RecursiveAction> actions = null;
 
         RenderAction(final Layer layer) {
             this.layer = layer;
@@ -142,7 +150,11 @@ public class Rasterizer {
 
         @Override
         protected void compute() {
-            this.layer.render();
+            if(this.layer instanceof Layer3D) {
+                this.actions = ((Layer3D) this.layer).renderAsync();
+            } else {
+                this.layer.render();
+            }
         }
     }
 }

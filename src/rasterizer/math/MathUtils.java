@@ -1,7 +1,7 @@
 package rasterizer.math;
 
 /**
- * Created by Ryan Thomson on 27/02/2017.
+ * Created by Ryan on 27/02/2017.
  */
 public final class MathUtils {
 
@@ -22,16 +22,32 @@ public final class MathUtils {
     private MathUtils() {
     }
 
+    public static int max(final int a, final int b) {
+        return a > b ? a : b;
+    }
+
     public static float max(final float a, final float b) {
         return a > b ? a : b;
+    }
+
+    public static int max(final int a, final int b, final int c) {
+        return a > b ? (a > c ? a : c) : (b > c ? b : c);
     }
 
     public static float max(final float a, final float b, final float c) {
         return a > b ? (a > c ? a : c) : (b > c ? b : c);
     }
 
+    public static int min(final int a, final int b) {
+        return a < b ? a : b;
+    }
+
     public static float min(final float a, final float b) {
         return a < b ? a : b;
+    }
+
+    public static int min(final int a, final int b, final int c) {
+        return a < b ? (a < c ? a : c) : (b < c ? b : c);
     }
 
     public static float min(final float a, final float b, final float c) {

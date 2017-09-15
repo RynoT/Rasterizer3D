@@ -18,9 +18,6 @@ public class Model {
     private boolean modelDirty = true;
     private final Matrix modelMatrix = new Matrix(4, 4);
 
-    public boolean _displayFlush = false;
-    public boolean _flushPostRender = false;
-
     public Model(){
         this(null);
     }
@@ -109,7 +106,7 @@ public class Model {
         if(this.modelDirty) {
             this.modelMatrix.setIdentity();
 
-            final Matrix temp = Matrix.TEMP_4x4.get();
+            final Matrix temp = new Matrix(4, 4);
             if(!this.scale.isOne()) {
                 this.modelMatrix.multiply(Matrix.setToScaleMatrix(temp, this.scale));
             }
