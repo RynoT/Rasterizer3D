@@ -19,8 +19,15 @@ public class FColorPass extends FragmentPass {
     }
 
     @Override
-    public boolean pass(final float[] outRGBA) {
-        System.arraycopy(this.rgba, 0, outRGBA, 0, outRGBA.length);
+    public boolean pass(final PassParameters params) {
+        final float maxZ = 2.0f, minZ = 1.0f;
+        final float mul = 1.0f - Math.max(0.0f, Math.min(1.0f, (params.finPoint[2] - minZ) / (maxZ - minZ)));
+
+        params.foutColor[0] = this.rgba[0] * mul;
+        params.foutColor[1] = this.rgba[1] * mul;
+        params.foutColor[2] = this.rgba[2] * mul;
+        params.foutColor[3] = this.rgba[3];
+
         return true;
     }
 }

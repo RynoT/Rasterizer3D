@@ -31,6 +31,7 @@ public class Canvas extends JFrame {
         this.rasterizer = new Rasterizer(Canvas.WIDTH, Canvas.HEIGHT, config);
 
         final Layer3D layer = new Layer3D(Canvas.WIDTH, Canvas.HEIGHT);
+        //layer._processTextureData = false;
         //layer._displayFlush = true;
         //layer.setToPerspectiveProjection(45.0f, 100000.0f, 0.1f);
         layer.setToOrthographicProjection(1000.0f, 0.1f);
@@ -44,7 +45,7 @@ public class Canvas extends JFrame {
         }
         //cubeModel.flushDisplay = true;
         cubeModel._flushPostRender = true;
-        cubeModel.setPosition(794 / 2, 571 / 2, 200.0f);
+        cubeModel.setPosition(794 / 2, 571 / 2, 250.0f);
         cubeModel.getMesh().setFragmentPass(texturePass);
         layer.addModel(cubeModel);
 

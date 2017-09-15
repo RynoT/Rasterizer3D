@@ -25,7 +25,7 @@ public class MeshMaterial {
         this.hasAlpha = image.getColorModel().hasAlpha();
         this.stride = this.hasAlpha ? 4 : 3;
 
-        // The image itself could be any valid type.
+        // The image itself could be any valid buffered image type.
         // Instead of trying to validate each type we are just going to convert it before getting the pixel data.
         BufferedImage img;
         if((this.hasAlpha && image.getType() == BufferedImage.TYPE_INT_ARGB) || image.getType() == BufferedImage.TYPE_INT_RGB) {
@@ -53,6 +53,8 @@ public class MeshMaterial {
             }
             this.pixels[k++] = ((array[i] >> 24) & 0xff) * inv255; //a
         }
+
+        // No buffered images are stored in the material. Only a copy of the raw pixel data.
     }
 
     public int getWidth() {

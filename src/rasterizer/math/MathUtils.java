@@ -22,8 +22,24 @@ public final class MathUtils {
     private MathUtils() {
     }
 
-    public static boolean equals(final float a, final float b) {
-        return MathUtils.equals(a, b, MathUtils.EPSILON);
+    public static float max(final float a, final float b) {
+        return a > b ? a : b;
+    }
+
+    public static float max(final float a, final float b, final float c) {
+        return a > b ? (a > c ? a : c) : (b > c ? b : c);
+    }
+
+    public static float min(final float a, final float b) {
+        return a < b ? a : b;
+    }
+
+    public static float min(final float a, final float b, final float c) {
+        return a < b ? (a < c ? a : c) : (b < c ? b : c);
+    }
+
+    public static int round(final float value) {
+        return (int) (value > 0.0f ? (value + 0.5f) : (value - 0.5f));
     }
 
     public static boolean equals(final float a, final float b, final float epsilon) {
@@ -41,6 +57,10 @@ public final class MathUtils {
 
     public static float tan(final float radians) {
         return (float) Math.tan(radians); //TODO
+    }
+
+    public static boolean equals(final float a, final float b) {
+        return MathUtils.equals(a, b, MathUtils.EPSILON);
     }
 
     static {

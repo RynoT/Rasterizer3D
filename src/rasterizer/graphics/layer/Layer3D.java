@@ -1,7 +1,7 @@
 package rasterizer.graphics.layer;
 
-import rasterizer.graphics.pass.FColorPass;
-import rasterizer.graphics.pass.FragmentPass;
+import rasterizer.graphics.pass.*;
+import rasterizer.math.MathUtils;
 import rasterizer.math.Matrix;
 import rasterizer.model.Model;
 import rasterizer.model.mesh.Mesh;
@@ -11,6 +11,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.RecursiveAction;
 
 /**
  * Created by Ryan on 12/09/2017.
@@ -22,6 +23,7 @@ public class Layer3D extends Layer {
     public boolean _useZBuffer = true;
     public boolean _processNormalData = true;
     public boolean _processTextureData = true;
+    public VertexPass _defaultVertexPass = new VProjectionPass();
     public FragmentPass _defaultFragmentPass = new FColorPass(Color.WHITE);
 
     private float far, near;
@@ -78,15 +80,19 @@ public class Layer3D extends Layer {
             Arrays.fill(this.zBuffer, this.far);
         }
 
-        final Matrix temp4x1 = Matrix.TEMP_4x1.get(), temp4x4 = Matrix.TEMP_4x4.get();
-
-        final float[] rgbaBuffer = new float[4];
-        final Matrix projectionView = this.getProjectionView();
-        final FragmentPass.FragmentParameters fParams = FragmentPass.getParameters();
+        final PassParameters params = PassParameters.get();
         for(final Model model : this.models) {
             final Mesh mesh = model.getMesh();
             if(mesh == null) {
                 continue;
+            }
+            VertexPass vPass = mesh.getVertexPass();
+            if(vPass == null) {
+                if(this._defaultVertexPass != null) {
+                    vPass = this._defaultVertexPass;
+                } else {
+                    continue; // no vertex pass means nothing can be rendered
+                }
             }
             FragmentPass fPass = mesh.getFragmentPass();
             if(fPass == null) {
@@ -96,42 +102,59 @@ public class Layer3D extends Layer {
                     continue; // no fragment pass means nothing can be rendered
                 }
             }
-            if(this._processTextureData) {
-                fParams.material = mesh.getMaterial();
-            }
 
             final MeshData meshData = mesh.getData();
+
+            params.inWidth = super.getWidth();
+            params.inHeight = super.getHeight();
+            params.inHasNormal = this._processNormalData && meshData.hasNormalData();
+            params.inHasTexture = this._processTextureData && meshData.hasTextureData();
+            params.vinProjectionMatrix = this.projection;
+            params.vinViewMatrix = this.view;
+            params.vinModelMatrix = model.getModelMatrix();
+            params.vinProjectionViewMatrix = this.getProjectionView();
+            if(this._processTextureData) {
+                params.finMaterial = mesh.getMaterial();
+            }
+
             final int stride = meshData.getStride();
             final int[] indices = meshData.getIndices();
             final float[] data = meshData.getData(), buffer = meshData.getBuffer();
-            final Matrix pvm = projectionView.multiply(model.getModelMatrix(), temp4x4);
 
             // Transform vertices by the pvm matrix
             for(final int idx : indices) {
                 int index = idx * stride, offset = 0;
 
                 // Point data
-                temp4x1.fill(new float[]{data[index], data[index + 1], data[index + 2], 1.0f});
-                pvm.multiply(temp4x1, temp4x1);
+                params.vinPoint[0] = data[index + offset++];
+                params.vinPoint[1] = data[index + offset++];
+                params.vinPoint[2] = data[index + offset++];
 
-                float z = -temp4x1.getElement(2);
-                buffer[index + offset++] = super.getWidth() * (temp4x1.getElement(0) / z) / 2.0f + super.getWidth() / 2.0f;
-                buffer[index + offset++] = super.getHeight() * (temp4x1.getElement(1) / z) / 2.0f + super.getHeight() / 2.0f;
-                buffer[index + offset++] = 1.0f / z;
-
-                // Normal data
-                if(this._processNormalData && meshData.hasNormalData()) {
-                    temp4x1.fill(new float[]{data[index + 3], data[index + 4], data[index + 5], 1.0f});
-                    pvm.multiply(temp4x1, temp4x1);
-                    buffer[index + offset++] = temp4x1.getElement(0);
-                    buffer[index + offset++] = temp4x1.getElement(1);
-                    buffer[index + offset++] = temp4x1.getElement(2);
+                if(params.inHasNormal) { // Normal data
+                    params.vinNormal[0] = data[index + offset++];
+                    params.vinNormal[1] = data[index + offset++];
+                    params.vinNormal[2] = data[index + offset++];
+                }
+                if(params.inHasTexture) { // Texture data
+                    params.vinTexture[0] = data[index + offset++];
+                    params.vinTexture[1] = data[index + offset];
                 }
 
-                // Texture data
-                if(this._processTextureData && meshData.hasTextureData()) {
-                    buffer[index + offset] = data[index + offset++] / z;
-                    buffer[index + offset] = data[index + offset] / z;
+                vPass.pass(params);
+
+                // Set buffer data from vertex pass output
+                offset = 0;
+                buffer[index + offset++] = params.voutPoint[0];
+                buffer[index + offset++] = params.voutPoint[1];
+                buffer[index + offset++] = params.voutPoint[2];
+                if(params.inHasNormal) {
+                    buffer[index + offset++] = params.voutNormal[0];
+                    buffer[index + offset++] = params.voutNormal[1];
+                    buffer[index + offset++] = params.voutNormal[2];
+                }
+                if(params.inHasTexture) {
+                    buffer[index + offset++] = params.voutTexture[0];
+                    buffer[index + offset] = params.voutTexture[1];
                 }
             }
 
@@ -156,10 +179,10 @@ public class Layer3D extends Layer {
                 }
 
                 // Get triangle (rectangular) bounds. The bounds are also limited to fit within viewport (so no out-of-bounds pixels are iterated over)
-                final int maxX = Math.round(Math.min(Math.max(px1, Math.max(px2, px3)), super.getWidth() - 1)),
-                        minX = Math.round(Math.max(Math.min(px1, Math.min(px2, px3)), 0.0f));
-                final int maxY = Math.round(Math.min(Math.max(py1, Math.max(py2, py3)), super.getHeight() - 1)),
-                        minY = Math.round(Math.max(Math.min(py1, Math.min(py2, py3)), 0.0f));
+                final int maxX = MathUtils.round(MathUtils.min(MathUtils.max(px1, px2, px3), params.inWidth - 1));
+                final int minX = MathUtils.round(MathUtils.max(MathUtils.min(px1, px2, px3), 0.0f));
+                final int maxY = MathUtils.round(MathUtils.min(MathUtils.max(py1, py2, py3), params.inHeight - 1));
+                final int minY = MathUtils.round(MathUtils.max(MathUtils.min(py1, py2, py3), 0.0f));
 
                 super.prepareRGBA(maxX, maxY, minX, minY);
 
@@ -197,29 +220,32 @@ public class Layer3D extends Layer {
                             // If we get here, we are going to render the pixel. Lets update the depth buffer first
                             this.zBuffer[depthIndex] = z;
                         }
+
                         // Setup fragment pass parameters
-                        fParams.point[0] = i;
-                        fParams.point[1] = j;
-                        fParams.point[2] = z;
+                        params.finPoint[0] = i;
+                        params.finPoint[1] = j;
+                        params.finPoint[2] = z;
 
                         int offset = MeshData.POINT_LENGTH;
-                        if(fParams.hasNormal = (this._processNormalData && meshData.hasNormalData())) {
-                            fParams.normal[0] = (buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3) * z;
-                            fParams.normal[1] = (buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3) * z;
-                            fParams.normal[2] = (buffer[idx1 + 2 + offset] * pw1 + buffer[idx2 + 2 + offset] * pw2 + buffer[idx3 + 2 + offset] * pw3) * z;
+                        if(params.inHasNormal) {
+                            params.finNormal[0] = (buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3) * z;
+                            params.finNormal[1] = (buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3) * z;
+                            params.finNormal[2] = (buffer[idx1 + 2 + offset] * pw1 + buffer[idx2 + 2 + offset] * pw2 + buffer[idx3 + 2 + offset] * pw3) * z;
 
                             offset += MeshData.NORMAL_LENGTH;
                         }
-                        if(fParams.hasTexture = (this._processTextureData && meshData.hasTextureData())) {
-                            fParams.texture[0] = (buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3) * z;
-                            fParams.texture[1] = (buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3) * z;
+                        if(params.inHasTexture) {
+                            params.finTexture[0] = (buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3) * z;
+                            params.finTexture[1] = (buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3) * z;
+
+                            //offset += MeshData.TEXTURE_LENGTH;
                         }
 
-                        if(!fPass.pass(rgbaBuffer) && (this._defaultFragmentPass == null || !this._defaultFragmentPass.pass(rgbaBuffer))) {
+                        if(!fPass.pass(params) && (this._defaultFragmentPass == null || !this._defaultFragmentPass.pass(params))) {
                             // If the fragment pass fails, we cannot render this pixel
                             continue;
                         }
-                        super.setRGBA(rgbaBuffer, i, j);
+                        super.setRGBA(params.foutColor, i, j);
                     }
                 }
             }
@@ -228,5 +254,9 @@ public class Layer3D extends Layer {
                 super.flushRGBA(model._displayFlush);
             }
         }
+    }
+
+    private void renderBox(final int x, final int y, final int w, final int h) {
+
     }
 }

@@ -92,11 +92,15 @@ public class RenderTarget extends BufferedImage {
     }
 
     public void setRGBA(final float[] rgba, final int x, final int y) {
-        assert rgba != null && rgba.length == 4;
-        assert x >= 0 && x < super.getWidth();
-        assert y >= 0 && y < super.getHeight();
-        System.arraycopy(rgba, 0, this.data, (x + y * super.getWidth())
-                * RenderTarget.RGBA_FLOAT_LENGTH, rgba.length);
+//        assert rgba != null && rgba.length == 4;
+//        assert x >= 0 && x < super.getWidth();
+//        assert y >= 0 && y < super.getHeight();
+
+        final int index = (x + y * super.getWidth()) * RenderTarget.RGBA_FLOAT_LENGTH;
+        this.data[index] = rgba[0];
+        this.data[index + 1] = rgba[1];
+        this.data[index + 2] = rgba[2];
+        this.data[index + 3] = rgba[3];
     }
 
     public void clear() {
