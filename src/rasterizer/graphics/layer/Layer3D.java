@@ -96,9 +96,14 @@ public class Layer3D extends Layer {
                 temp4x1.fill(new float[]{data[index], data[index + 1], data[index + 2], 1.0f});
                 pvm.multiply(temp4x1, temp4x1);
 
-                buffer[index + offset++] = temp4x1.getElement(0);
-                buffer[index + offset++] = temp4x1.getElement(1);
-                buffer[index + offset++] = -temp4x1.getElement(2);
+//                buffer[index + offset++] = temp4x1.getElement(0);
+//                buffer[index + offset++] = temp4x1.getElement(1);
+//                buffer[index + offset++] = -temp4x1.getElement(2);
+
+                final float z = -temp4x1.getElement(2);
+                buffer[index + offset++] = super.getWidth() * (temp4x1.getElement(0) / z) / 2.0f + super.getWidth() / 2.0f;
+                buffer[index + offset++] = super.getHeight() * (temp4x1.getElement(1) / z) / 2.0f + super.getHeight() / 2.0f;
+                buffer[index + offset++] = 1.0f / z;
 
                 // Normal data
                 if(meshData.hasNormalData()) {
@@ -111,8 +116,8 @@ public class Layer3D extends Layer {
 
                 // Texture data
                 if(meshData.hasTextureData()) {
-                    buffer[index + offset] = data[index + offset++];
-                    buffer[index + offset] = data[index + offset];
+                    buffer[index + offset] = data[index + offset++] / z;
+                    buffer[index + offset] = data[index + offset] / z;
                 }
             }
 
@@ -132,9 +137,9 @@ public class Layer3D extends Layer {
                 }
 
                 // Get triangle (rectangular) bounds. The bounds are also limited to fit within viewport (so no out-of-bounds pixels are iterated over)
-                final int maxX = Math.round(Math.min(Math.max(px1, Math.max(px2, px3)), super.getWidth())),
+                final int maxX = Math.round(Math.min(Math.max(px1, Math.max(px2, px3)), super.getWidth() - 1)),
                         minX = Math.round(Math.max(Math.min(px1, Math.min(px2, px3)), 0.0f));
-                final int maxY = Math.round(Math.min(Math.max(py1, Math.max(py2, py3)), super.getHeight())),
+                final int maxY = Math.round(Math.min(Math.max(py1, Math.max(py2, py3)), super.getHeight() - 1)),
                         minY = Math.round(Math.max(Math.min(py1, Math.min(py2, py3)), 0.0f));
 
                 super.prepareRGBA(maxX, maxY, minX, minY);
@@ -160,10 +165,10 @@ public class Layer3D extends Layer {
 
                         // If we get here, we know that the point is inside of the triangle and may need to be rendered
 
-                        final float z = (pz1 * pw1 + pz2 * pw2 + pz3 * pw3);
+                        final float z = 1.0f / (pz1 * pw1 + pz2 * pw2 + pz3 * pw3);
                         // Check to see if this pixel is visible (according to near, far, and the depth buffer)
                         if(z < this.near || z > this.far) {
-                            //continue;
+                            continue;
                         }
                         final int depthIndex = i + j * super.getWidth();
                         if(z > this.zBuffer[depthIndex]) {
@@ -183,8 +188,9 @@ public class Layer3D extends Layer {
                         }
                         if(fParams.hasTexture = meshData.hasTextureData()) {
                             final int offset = MeshData.POINT_LENGTH + (fParams.hasNormal ? MeshData.NORMAL_LENGTH : 0);
-                            fParams.texture[0] = buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3;
-                            fParams.texture[1] = buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3;
+
+                            fParams.texture[0] = (buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3) * z;
+                            fParams.texture[1] = (buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3) * z;
                         }
 
                         fPass.pass(rgbaBuffer);

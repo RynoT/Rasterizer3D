@@ -236,36 +236,27 @@ public class Matrix {
         });
     }
 
-    //public static Matrix setToPerspectiveMatrix(final Matrix matrix, final )
-
     // Set provided matrix to an orthographic matrix. Returns provided matrix.
     public static Matrix setToOrthographicMatrix(final Matrix matrix, final float width,
                                                  final float height, final float far, final float near) {
+        return Matrix.setToOrthographicMatrix(matrix, 0.0f, width, 0.0f, height, far, near);
+    }
+
+    // Set provided matrix to an orthographic matrix. Returns provided matrix.
+    public static Matrix setToOrthographicMatrix(final Matrix matrix, final float left, final float right,
+                                                 final float top, final float bottom, final float far, final float near) {
         assert matrix.rowCount == 4 && matrix.columnCount == 4;
+        // Configured so that top left is (0,0) instead of bottom left. This is to work with java graphics.
         return matrix.fill(new float[]{
-                2.0f / (width - 1.0f), 0.0f, 0.0f, -1.0f,
-                0.0f, -2.0f / (height - 1.0f), 0.0f, 1.0f,
-                0.0f, 0.0f, 2.0f / (far - near), (near + far) / (near - far),
+                2.0f / (right - left), 0.0f, 0.0f, -(right + left) / (right - left),
+                0.0f, 2.0f / (bottom - top), 0.0f, -(top + bottom) / (bottom - top),
+                0.0f, 0.0f, -2.0f / (far - near), -(far + near) / (far - near),
                 0.0f, 0.0f, 0.0f, 1.0f
         });
-
-
-//        x_max = viewport_width - 1.0;
-//        y_max = viewport_height - 1.0;
-//        x_new = 2.0 * x / x_max - 1.0;
-//        y_new = -(2.0 * y / y_max - 1.0);
-//        z_new = 2.0 * (z - zNear) / (zFar - zNear) - 1.0;
-//        w_new = 1.0;
-
-//| 2/x_max   0        0                     -1             |
-//|    0  -2/y_max     0                      1             |
-//|    0      0   2/(zFar-zNear)  (zNear+zFar)/(zNear-zFar) |
-//|    0      0        0                      1             |
-
 //        return matrix.fill(new float[]{
-//                1.0f, 0.0f, 0.0f, 0.0f,
-//                0.0f, 1.0f, 0.0f, 0.0f,
-//                0.0f, 0.0f, -2.0f / (far - near), -(far + near) / (far - near),
+//                2.0f / (width - 1.0f), 0.0f, 0.0f, -1.0f,
+//                0.0f, -2.0f / (height - 1.0f), 0.0f, 1.0f,
+//                0.0f, 0.0f, 2.0f / (far - near), (near + far) / (near - far),
 //                0.0f, 0.0f, 0.0f, 1.0f
 //        });
     }
@@ -274,7 +265,7 @@ public class Matrix {
     public static Matrix setToPerspectiveMatrix(final Matrix matrix, final float width, final float height,
                                                 final float fov, final float far, final float near) {
         assert matrix.rowCount == 4 && matrix.columnCount == 4;
-        final float aspect = 1.0f;//width / height;
+        final float aspect = width / height;
         final float tfov = 1.0f / MathUtils.tan((fov / 2.0f) * MathUtils.DEG_TO_RAD);
         return matrix.fill(new float[]{
                 tfov / aspect, 0.0f, 0.0f, 0.0f,
