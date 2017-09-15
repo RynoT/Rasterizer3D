@@ -59,12 +59,13 @@ public class Canvas extends JFrame {
             protected void paintComponent(final Graphics g) {
                 super.paintComponent(g);
 
-                float dd = 15 * MathUtils.DEG_TO_RAD * rasterizer.getDelta();
-                cubeModel.rotate(dd, dd, dd);
+                float dd = 25 * MathUtils.DEG_TO_RAD * rasterizer.getDelta();
+                cubeModel.rotate(dd, dd,0);
                 //cubeModel.setRotation(-60*MathUtils.DEG_TO_RAD,0,0);
 
                 Canvas.this.rasterizer.render((Graphics2D) g);
-                Canvas.super.setTitle("FPS: " + String.format("%.1f", Canvas.this.rasterizer.getFps()));
+                Canvas.super.setTitle(String.format("FPS: %02d | %02.1f", Math.round(Canvas
+                        .this.rasterizer.getAverageFps()), Canvas.this.rasterizer.getFps()));
             }
         };
         super.setContentPane(content);

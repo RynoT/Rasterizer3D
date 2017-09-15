@@ -14,12 +14,12 @@ public class CubeMesh extends Mesh {
     public CubeMesh(final float xLen, final float yLen, final float zLen) {
         final float hx = xLen / 2.0f, hy = yLen / 2.0f, hz = zLen / 2.0f;
         final float[] buffer = {
-                -hx, hy, -hz, 0.0f, 1.0f, /**/ -hx, -hy, -hz, 0.0f, 0.0f, /**/ hx, -hy, -hz, 1.0f, 0.0f, /**/ hx, hy, -hz, 1.0f, 1.0f, //front
-                -hx, hy, hz, 0.0f, 1.0f, /**/ hx, hy, hz, 0.0f, 0.0f, /**/ hx, -hy, hz, 1.0f, 0.0f, /**/ -hx, -hy, hz, 1.0f, 1.0f, //back
-                hx, hy, -hz, 0.0f, 1.0f, /**/ hx, -hy, -hz, 0.0f, 0.0f, /**/ hx, -hy, hz, 1.0f, 0.0f, /**/ hx, hy, hz, 1.0f, 1.0f, //right
-                -hx, hy, -hz, 0.0f, 1.0f, /**/ -hx, hy, hz, 0.0f, 0.0f, /**/ -hx, -hy, hz, 1.0f, 0.0f, /**/ -hx, -hy, -hz, 1.0f, 1.0f, //left
-                -hx, hy, -hz, 0.0f, 1.0f, /**/ hx, hy, -hz, 0.0f, 0.0f, /**/ hx, hy, hz, 1.0f, 0.0f, /**/ -hx, hy, hz, 1.0f, 1.0f, //top
-                -hx, -hy, -hz, 0.0f, 1.0f, /**/ -hx, -hy, hz, 0.0f, 0.0f, /**/ hx, -hy, hz, 1.0f, 0.0f, /**/ hx, -hy, -hz, 1.0f, 1.0f //bottom
+                -hx, hy, -hz, 0.0f, 1.0f, /**/ hx, hy, -hz, 1.0f, 1.0f, /**/ hx, -hy, -hz, 1.0f, 0.0f, /**/ -hx, -hy, -hz, 0.0f, 0.0f, //front
+                -hx, hy, hz, 0.0f, 1.0f, /**/ -hx, -hy, hz, 1.0f, 1.0f, /**/ hx, -hy, hz, 1.0f, 0.0f, /**/ hx, hy, hz, 0.0f, 0.0f, //back
+                hx, hy, -hz, 0.0f, 1.0f, /**/ hx, hy, hz, 1.0f, 1.0f, /**/ hx, -hy, hz, 1.0f, 0.0f, /**/ hx, -hy, -hz, 0.0f, 0.0f, //right
+                -hx, hy, -hz, 0.0f, 1.0f, /**/ -hx, -hy, -hz, 1.0f, 1.0f, /**/ -hx, -hy, hz, 1.0f, 0.0f, /**/ -hx, hy, hz, 0.0f, 0.0f, //left
+                -hx, hy, -hz, 0.0f, 1.0f, /**/ -hx, hy, hz, 1.0f, 1.0f, /**/ hx, hy, hz, 1.0f, 0.0f, /**/ hx, hy, -hz, 0.0f, 0.0f, //top
+                -hx, -hy, -hz, 0.0f, 1.0f, /**/ hx, -hy, -hz, 1.0f, 1.0f, /**/ hx, -hy, hz, 1.0f, 0.0f, /**/ -hx, -hy, hz, 0.0f, 0.0f //bottom
         };
         final int[] indices = {
                 0, 1, 2, 2, 3, 0,

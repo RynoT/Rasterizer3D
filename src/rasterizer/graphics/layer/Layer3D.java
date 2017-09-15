@@ -96,10 +96,6 @@ public class Layer3D extends Layer {
                 temp4x1.fill(new float[]{data[index], data[index + 1], data[index + 2], 1.0f});
                 pvm.multiply(temp4x1, temp4x1);
 
-//                buffer[index + offset++] = temp4x1.getElement(0);
-//                buffer[index + offset++] = temp4x1.getElement(1);
-//                buffer[index + offset++] = -temp4x1.getElement(2);
-
                 final float z = -temp4x1.getElement(2);
                 buffer[index + offset++] = super.getWidth() * (temp4x1.getElement(0) / z) / 2.0f + super.getWidth() / 2.0f;
                 buffer[index + offset++] = super.getHeight() * (temp4x1.getElement(1) / z) / 2.0f + super.getHeight() / 2.0f;
@@ -133,7 +129,12 @@ public class Layer3D extends Layer {
 
                 // Check near/far
                 if((pz1 < this.near && pz2 < this.near && pz3 < this.near) || (pz1 > this.far && pz2 > this.far && pz3 > this.far)) {
-                    //continue;
+                    continue;
+                }
+
+                // Check for back-facing. Front facing should be CCW (>= 0.0f, CW is < 0.0f) (Check Z component using cross product formula: (B - A) x (C - A))
+                if((px2 - px1) * (py3 - py1) - (py2 - py1) * (px3 - px1) >= 0.0f) {
+                    continue;
                 }
 
                 // Get triangle (rectangular) bounds. The bounds are also limited to fit within viewport (so no out-of-bounds pixels are iterated over)

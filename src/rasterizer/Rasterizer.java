@@ -1,14 +1,13 @@
 package rasterizer;
 
 import rasterizer.graphics.layer.Layer;
-import rasterizer.graphics.target.RenderTarget;
 
 import java.awt.*;
-import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
 
 /**
  * Created by Ryan on 10/09/2017.
@@ -25,6 +24,8 @@ public class Rasterizer {
     private long lastFrameTime = 0L;
     private float delta, fps;
 
+    private float averageFps, averageFpsTotal, averageFpsCounter;
+
     private final List<Layer> layers = new ArrayList<>();
 
     public Rasterizer(final int width, final int height) {
@@ -40,6 +41,10 @@ public class Rasterizer {
 
     public float getFps() {
         return this.fps;
+    }
+
+    public float getAverageFps() {
+        return this.averageFps;
     }
 
     public float getDelta() {
@@ -108,6 +113,14 @@ public class Rasterizer {
         this.delta = frameDuration * 1e-9f;
         this.fps = 1.0f / this.delta;
         this.lastFrameTime = time;
+
+        this.averageFpsTotal = (this.averageFpsTotal + this.fps) / 2.0f;
+        this.averageFpsCounter += this.delta;
+        if(this.averageFpsCounter > 1.0f) {
+            this.averageFps = this.averageFpsTotal / this.averageFpsCounter;
+            this.averageFpsTotal -= this.averageFps;
+            this.averageFpsCounter -= 1.0f;
+        }
     }
 
     public static class Config {
