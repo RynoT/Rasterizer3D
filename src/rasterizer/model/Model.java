@@ -18,8 +18,8 @@ public class Model {
     private boolean modelDirty = true;
     private final Matrix modelMatrix = new Matrix(4, 4);
 
-    public boolean flushDisplay = false;
-    public boolean flushPostRender = false;
+    public boolean _displayFlush = false;
+    public boolean _flushPostRender = false;
 
     public Model(){
         this(null);

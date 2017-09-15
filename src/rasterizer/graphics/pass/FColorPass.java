@@ -19,7 +19,8 @@ public class FColorPass extends FragmentPass {
     }
 
     @Override
-    public void pass(final float[] outRGBA) {
+    public boolean pass(final float[] outRGBA) {
         System.arraycopy(this.rgba, 0, outRGBA, 0, outRGBA.length);
+        return true;
     }
 }

@@ -11,7 +11,7 @@ public class Layer2D extends Layer {
         super(width, height);
 
         // Stop RGBA RenderTarget data from writing to our layer
-        super.disableCustomRGBA = true;
+        super._disableCustomRGBA = true;
     }
 
     @Override

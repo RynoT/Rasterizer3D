@@ -1,10 +1,9 @@
 package rasterizer.graphics.target;
 
-import rasterizer.math.MathUtils;
-
 import java.awt.*;
-import java.awt.image.*;
-import java.util.Arrays;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.WritableRaster;
 
 /**
  * Created by Ryan on 11/09/2017.
@@ -13,14 +12,14 @@ public class RenderTarget extends BufferedImage {
 
     public static final int RGBA_FLOAT_LENGTH = 4; // r, g, b, a
 
+    public boolean _displayFlush = false;
+    public boolean _disableCustomRGBA = false;
+
     private final float[] data;
     private final float[] clearColor = new float[]{0.02f, 0.03f, 0.04f, 1.0f};
 
     private boolean flushed = false;
-    private final Rectangle flushBounds;
-
-    public boolean flushDisplay = false;
-    protected boolean disableCustomRGBA = false;
+    private final Rectangle flushBounds/*, lastFlushBounds = new Rectangle()*/;
 
     public RenderTarget(final int width, final int height) {
         super(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -112,17 +111,53 @@ public class RenderTarget extends BufferedImage {
         this.flushed = true;
 
         final Graphics2D g2d = super.createGraphics();
-        g2d.setBackground(new Color(this.clearColor[0], this.clearColor[1], this.clearColor[2], this.clearColor[3]));
+        g2d.setBackground(new Color(rgba[0], rgba[1], rgba[2], rgba[3]));
         g2d.clearRect(0, 0, super.getWidth(), super.getHeight());
         g2d.dispose();
     }
 
+//    public void clearLast(){
+//        this.clearLast(this.clearColor);
+//    }
+//
+//    public void clearLast(final float[] rgba) {
+//        assert rgba != null && rgba.length == 4;
+//        final int x = this.lastFlushBounds.x, y = this.lastFlushBounds.y, w = this.lastFlushBounds.width, h = this.lastFlushBounds.height;
+//        for(int j = y; j < y + h; j++) {
+//            if(j >= super.getHeight()) {
+//                break;
+//            }
+//            for(int i = x; i < x + w; i++) {
+//                if(i >= super.getWidth()) {
+//                    break;
+//                }
+//                final int k = (i + j * super.getWidth()) * RenderTarget.RGBA_FLOAT_LENGTH;
+//                if(k >= this.data.length) {
+//                    break;
+//                }
+//                System.arraycopy(rgba, 0, this.data, k, rgba.length);
+//            }
+//        }
+//        final Graphics2D g2d = super.createGraphics();
+//        g2d.setBackground(new Color(rgba[0], rgba[1], rgba[2], rgba[3]));
+//        g2d.clearRect(x, y, w, h);
+//
+//        // We can't render this or else it will no longer be clear :/
+////        if(this._displayFlush) {
+////            g2d.setColor(Color.ORANGE);
+////            g2d.drawRect(x, y, w, h);
+////        }
+//        g2d.dispose();
+//
+//        this.lastFlushBounds.x = -1;
+//    }
+
     public void flushRGBA() {
-        this.flushRGBA(this.flushDisplay);
+        this.flushRGBA(this._displayFlush);
     }
 
     public void flushRGBA(final boolean flushDisplay) {
-        if(!this.flushed && !this.disableCustomRGBA) {
+        if(!this.flushed && !this._disableCustomRGBA) {
             Object pixel = null;
             final ColorModel model = super.getColorModel();
             final WritableRaster raster = super.getRaster();
@@ -148,8 +183,13 @@ public class RenderTarget extends BufferedImage {
                 }
             }
             this.flushed = true;
+//            if(this.lastFlushBounds.x == -1) {
+//                this.lastFlushBounds.setBounds(this.flushBounds);
+//            } else {
+//                this.lastFlushBounds.add(this.flushBounds);
+//            }
 
-            if(flushDisplay || this.flushDisplay) {
+            if(flushDisplay || this._displayFlush) {
                 final Graphics2D bg2d = super.createGraphics();
                 bg2d.setColor(Color.RED);
                 bg2d.drawRect(x, y, w, h);

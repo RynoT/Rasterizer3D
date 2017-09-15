@@ -31,9 +31,9 @@ public class Canvas extends JFrame {
         this.rasterizer = new Rasterizer(Canvas.WIDTH, Canvas.HEIGHT, config);
 
         final Layer3D layer = new Layer3D(Canvas.WIDTH, Canvas.HEIGHT);
-        //layer.flushDisplay = true;
-        //layer.setToPerspectiveProjection(45.0f, 1000.0f, 0.0001f);
-        layer.setToOrthographicProjection(1000.0f, 0.0001f);
+        //layer._displayFlush = true;
+        //layer.setToPerspectiveProjection(45.0f, 100000.0f, 0.1f);
+        layer.setToOrthographicProjection(1000.0f, 0.1f);
 
         final Model cubeModel = new Model(new CubeMesh(300.0f, 300.0f, 300.0f));
         //final Model cubeModel = new Model(new QuadMesh(500, 500, true));
@@ -43,7 +43,7 @@ public class Canvas extends JFrame {
             e.printStackTrace();
         }
         //cubeModel.flushDisplay = true;
-        cubeModel.flushPostRender = true;
+        cubeModel._flushPostRender = true;
         cubeModel.setPosition(794 / 2, 571 / 2, 200.0f);
         cubeModel.getMesh().setFragmentPass(texturePass);
         layer.addModel(cubeModel);
@@ -60,7 +60,8 @@ public class Canvas extends JFrame {
                 super.paintComponent(g);
 
                 float dd = 25 * MathUtils.DEG_TO_RAD * rasterizer.getDelta();
-                cubeModel.rotate(dd, dd,0);
+                cubeModel.rotate(dd, dd,dd);
+//                cubeModel.translate(0,0,-120*rasterizer.getDelta());
                 //cubeModel.setRotation(-60*MathUtils.DEG_TO_RAD,0,0);
 
                 Canvas.this.rasterizer.render((Graphics2D) g);

@@ -33,7 +33,9 @@ public class MeshMaterial {
         } else {
             img = new BufferedImage(image.getWidth(), image.getHeight(), this.hasAlpha ?
                     BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
-            img.getGraphics().drawImage(image, 0, 0, null);
+            final Graphics2D g2d = img.createGraphics();
+            g2d.drawImage(image, 0, 0, null);
+            g2d.dispose();
         }
         assert img.getRaster().getDataBuffer() instanceof DataBufferInt : img.getRaster().getDataBuffer();
 
@@ -71,18 +73,13 @@ public class MeshMaterial {
 
     // Return index within pixel array. xp and yp should be percentages.
     public int getIndex(float xp, float yp) {
+        xp %= 1.0f;
+        yp %= 1.0f;
         if(xp < 0.0f) {
-            return this.getIndex(1.0f + xp, yp);
-            //xp = -xp;
+            xp = 1.0f + xp;
         }
         if(yp < 0.0f) {
-            return this.getIndex(xp, 1.0f + yp);
-        }
-        if(xp > 1.0f) {
-            xp %= 1.0f;
-        }
-        if(yp > 1.0f) {
-            yp %= 1.0f;
+            yp = 1.0f + yp;
         }
         final int x = (int) ((this.width - 1) * xp) % this.width,
                 y = (int) ((this.height - 1) * yp) % this.height;

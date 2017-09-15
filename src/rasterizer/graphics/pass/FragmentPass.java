@@ -12,7 +12,7 @@ public abstract class FragmentPass {
     // FragmentParameters must be ThreadLocal so that we can multi-thread Layer3D rendering.
     private static final ThreadLocal<FragmentParameters> PARAMETERS = ThreadLocal.withInitial(FragmentParameters::new);
 
-    public abstract void pass(final float[] outRGBA);
+    public abstract boolean pass(final float[] outRGBA);
 
     public static FragmentParameters getParameters(){
         return FragmentPass.PARAMETERS.get();

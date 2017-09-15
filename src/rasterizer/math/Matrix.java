@@ -246,6 +246,7 @@ public class Matrix {
     public static Matrix setToOrthographicMatrix(final Matrix matrix, final float left, final float right,
                                                  final float top, final float bottom, final float far, final float near) {
         assert matrix.rowCount == 4 && matrix.columnCount == 4;
+        assert near > 0.0f && far > near;
         // Configured so that top left is (0,0) instead of bottom left. This is to work with java graphics.
         return matrix.fill(new float[]{
                 2.0f / (right - left), 0.0f, 0.0f, -(right + left) / (right - left),
@@ -265,6 +266,7 @@ public class Matrix {
     public static Matrix setToPerspectiveMatrix(final Matrix matrix, final float width, final float height,
                                                 final float fov, final float far, final float near) {
         assert matrix.rowCount == 4 && matrix.columnCount == 4;
+        assert near > 0.0f && far > near;
         final float aspect = width / height;
         final float tfov = 1.0f / MathUtils.tan((fov / 2.0f) * MathUtils.DEG_TO_RAD);
         return matrix.fill(new float[]{

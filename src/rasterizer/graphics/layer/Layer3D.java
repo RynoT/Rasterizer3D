@@ -1,5 +1,6 @@
 package rasterizer.graphics.layer;
 
+import rasterizer.graphics.pass.FColorPass;
 import rasterizer.graphics.pass.FragmentPass;
 import rasterizer.math.Matrix;
 import rasterizer.model.Model;
@@ -15,6 +16,13 @@ import java.util.List;
  * Created by Ryan on 12/09/2017.
  */
 public class Layer3D extends Layer {
+
+    public boolean _render3d = true;
+    public boolean _cullFaces = true; //front faces must be CCW if enabled
+    public boolean _useZBuffer = true;
+    public boolean _processNormalData = true;
+    public boolean _processTextureData = true;
+    public FragmentPass _defaultFragmentPass = new FColorPass(Color.WHITE);
 
     private float far, near;
     private final Matrix view, projection;
@@ -62,11 +70,15 @@ public class Layer3D extends Layer {
 
     @Override
     public void render() {
-        assert this.zBuffer != null : "Projection matrix probably not set";
-        final Matrix temp4x1 = Matrix.TEMP_4x1.get(), temp4x4 = Matrix.TEMP_4x4.get();
-
+        if(!this._render3d) {
+            return;
+        }
         super.clear();
-        Arrays.fill(this.zBuffer, this.far);
+        if(this._useZBuffer) {
+            Arrays.fill(this.zBuffer, this.far);
+        }
+
+        final Matrix temp4x1 = Matrix.TEMP_4x1.get(), temp4x4 = Matrix.TEMP_4x4.get();
 
         final float[] rgbaBuffer = new float[4];
         final Matrix projectionView = this.getProjectionView();
@@ -76,11 +88,17 @@ public class Layer3D extends Layer {
             if(mesh == null) {
                 continue;
             }
-            final FragmentPass fPass = mesh.getFragmentPass();
+            FragmentPass fPass = mesh.getFragmentPass();
             if(fPass == null) {
-                continue; // no fragment pass means nothing can be rendered
+                if(this._defaultFragmentPass != null) {
+                    fPass = this._defaultFragmentPass;
+                } else {
+                    continue; // no fragment pass means nothing can be rendered
+                }
             }
-            fParams.material = mesh.getMaterial();
+            if(this._processTextureData) {
+                fParams.material = mesh.getMaterial();
+            }
 
             final MeshData meshData = mesh.getData();
             final int stride = meshData.getStride();
@@ -96,13 +114,13 @@ public class Layer3D extends Layer {
                 temp4x1.fill(new float[]{data[index], data[index + 1], data[index + 2], 1.0f});
                 pvm.multiply(temp4x1, temp4x1);
 
-                final float z = -temp4x1.getElement(2);
+                float z = -temp4x1.getElement(2);
                 buffer[index + offset++] = super.getWidth() * (temp4x1.getElement(0) / z) / 2.0f + super.getWidth() / 2.0f;
                 buffer[index + offset++] = super.getHeight() * (temp4x1.getElement(1) / z) / 2.0f + super.getHeight() / 2.0f;
                 buffer[index + offset++] = 1.0f / z;
 
                 // Normal data
-                if(meshData.hasNormalData()) {
+                if(this._processNormalData && meshData.hasNormalData()) {
                     temp4x1.fill(new float[]{data[index + 3], data[index + 4], data[index + 5], 1.0f});
                     pvm.multiply(temp4x1, temp4x1);
                     buffer[index + offset++] = temp4x1.getElement(0);
@@ -111,7 +129,7 @@ public class Layer3D extends Layer {
                 }
 
                 // Texture data
-                if(meshData.hasTextureData()) {
+                if(this._processTextureData && meshData.hasTextureData()) {
                     buffer[index + offset] = data[index + offset++] / z;
                     buffer[index + offset] = data[index + offset] / z;
                 }
@@ -133,7 +151,7 @@ public class Layer3D extends Layer {
                 }
 
                 // Check for back-facing. Front facing should be CCW (>= 0.0f, CW is < 0.0f) (Check Z component using cross product formula: (B - A) x (C - A))
-                if((px2 - px1) * (py3 - py1) - (py2 - py1) * (px3 - px1) >= 0.0f) {
+                if(this._cullFaces && (px2 - px1) * (py3 - py1) - (py2 - py1) * (px3 - px1) >= 0.0f) {
                     continue;
                 }
 
@@ -171,37 +189,43 @@ public class Layer3D extends Layer {
                         if(z < this.near || z > this.far) {
                             continue;
                         }
-                        final int depthIndex = i + j * super.getWidth();
-                        if(z > this.zBuffer[depthIndex]) {
-                            continue;
+                        if(this._useZBuffer) {
+                            final int depthIndex = i + j * super.getWidth();
+                            if(z > this.zBuffer[depthIndex]) {
+                                continue;
+                            }
+                            // If we get here, we are going to render the pixel. Lets update the depth buffer first
+                            this.zBuffer[depthIndex] = z;
                         }
-
-                        // If we get here, we are going to render the pixel. Lets update the depth buffer first
-                        this.zBuffer[depthIndex] = z;
-
                         // Setup fragment pass parameters
                         fParams.point[0] = i;
                         fParams.point[1] = j;
                         fParams.point[2] = z;
 
-                        if(fParams.hasNormal = meshData.hasNormalData()) {
+                        int offset = MeshData.POINT_LENGTH;
+                        if(fParams.hasNormal = (this._processNormalData && meshData.hasNormalData())) {
+                            fParams.normal[0] = (buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3) * z;
+                            fParams.normal[1] = (buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3) * z;
+                            fParams.normal[2] = (buffer[idx1 + 2 + offset] * pw1 + buffer[idx2 + 2 + offset] * pw2 + buffer[idx3 + 2 + offset] * pw3) * z;
 
+                            offset += MeshData.NORMAL_LENGTH;
                         }
-                        if(fParams.hasTexture = meshData.hasTextureData()) {
-                            final int offset = MeshData.POINT_LENGTH + (fParams.hasNormal ? MeshData.NORMAL_LENGTH : 0);
-
+                        if(fParams.hasTexture = (this._processTextureData && meshData.hasTextureData())) {
                             fParams.texture[0] = (buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3) * z;
                             fParams.texture[1] = (buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3) * z;
                         }
 
-                        fPass.pass(rgbaBuffer);
+                        if(!fPass.pass(rgbaBuffer) && (this._defaultFragmentPass == null || !this._defaultFragmentPass.pass(rgbaBuffer))) {
+                            // If the fragment pass fails, we cannot render this pixel
+                            continue;
+                        }
                         super.setRGBA(rgbaBuffer, i, j);
                     }
                 }
             }
             // To avoid setting as many unused pixels as possible, we will flush the rgba after each model has been rendered if it requests so.
-            if(model.flushPostRender) {
-                super.flushRGBA(model.flushDisplay);
+            if(model._flushPostRender) {
+                super.flushRGBA(model._displayFlush);
             }
         }
     }
