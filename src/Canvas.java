@@ -1,8 +1,12 @@
 import rasterizer.Rasterizer;
 import rasterizer.graphics.layer.Layer3D;
+import rasterizer.graphics.light.PointLight;
+import rasterizer.graphics.pass.FLightPass;
+import rasterizer.graphics.pass.FNormalColorPass;
 import rasterizer.graphics.pass.FTexturePass;
 import rasterizer.graphics.pass.FragmentPass;
 import rasterizer.math.MathUtils;
+import rasterizer.math.Vector3f;
 import rasterizer.model.Model;
 import rasterizer.model.mesh.MeshMaterial;
 import rasterizer.model.mesh.basic.CubeMesh;
@@ -22,14 +26,19 @@ public class Canvas extends JFrame {
     private final Rasterizer rasterizer;
 
     private Canvas() {
-        final FragmentPass texturePass = new FTexturePass();
+        final FTexturePass texturePass = new FTexturePass();
+        texturePass._on_fail_return = true;
 
-        final Rasterizer.Config config = new Rasterizer.Config();
-        this.rasterizer = new Rasterizer(Canvas.WIDTH, Canvas.HEIGHT, config);
+        final FLightPass lightPass = new FLightPass(1);
+        lightPass.setLight(0, new PointLight(new Vector3f(0.0f, 0.0f, 0.0f)).setColor(new float[]{1.0f, 0.0f, 0.0f, 1.0f}));
+
+        final FragmentPass fragPass = FragmentPass.chain(texturePass, lightPass);
+
+        this.rasterizer = new Rasterizer(Canvas.WIDTH, Canvas.HEIGHT);
 
         final Layer3D layer = new Layer3D(Canvas.WIDTH, Canvas.HEIGHT);
-        layer._render_async = true;
-        layer._render_async_threadsafe = true;
+        //layer._display_flush = true;
+        //layer._display_chunks = true;
         //layer.setToPerspectiveProjection(45.0f, 100000.0f, 0.1f);
         layer.setToOrthographicProjection(1000.0f, 0.1f);
 
@@ -41,7 +50,7 @@ public class Canvas extends JFrame {
             e.printStackTrace();
         }
         cubeModel.setPosition(794 / 2, 571 / 2, 250.0f);
-        cubeModel.getMesh().setFragmentPass(texturePass);
+        cubeModel.getMesh().setFragmentPass(fragPass);
         layer.addModel(cubeModel);
 
         this.rasterizer.addLayer(layer);
@@ -56,7 +65,7 @@ public class Canvas extends JFrame {
                 super.paintComponent(g);
 
                 float dd = 25 * MathUtils.DEG_TO_RAD * rasterizer.getDelta();
-                cubeModel.rotate(dd, dd,0);
+                cubeModel.rotate(dd, dd, 0);
 //                cubeModel.translate(0,0,-120*rasterizer.getDelta());
                 //cubeModel.setRotation(-60*MathUtils.DEG_TO_RAD,0,0);
 

@@ -5,15 +5,15 @@ import java.awt.*;
 /**
  * Created by Ryan on 14/09/2017.
  */
-public class FColorPass extends FragmentPass {
+public class FSolidColorPass extends FragmentPass {
 
     private final float[] rgba;
 
-    public FColorPass(final Color color) {
+    public FSolidColorPass(final Color color) {
         this(new float[]{color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f});
     }
 
-    public FColorPass(final float[] rgba) {
+    public FSolidColorPass(final float[] rgba) {
         assert rgba != null && rgba.length == 4;
         this.rgba = rgba;
     }
@@ -21,7 +21,7 @@ public class FColorPass extends FragmentPass {
     @Override
     public boolean pass(final PassParameters params) {
         final float maxZ = 2.0f, minZ = 1.0f;
-        final float mul = 1.0f - Math.max(0.0f, Math.min(1.0f, (params.finPoint[2] - minZ) / (maxZ - minZ)));
+        final float mul = params._skip_lighting ? 1.0f : 1.0f - Math.max(0.0f, Math.min(1.0f, (params.finPoint[2] - minZ) / (maxZ - minZ)));
 
         params.foutColor[0] = this.rgba[0] * mul;
         params.foutColor[1] = this.rgba[1] * mul;

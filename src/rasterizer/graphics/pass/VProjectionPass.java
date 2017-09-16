@@ -7,20 +7,21 @@ import rasterizer.math.Matrix;
  */
 public class VProjectionPass extends VertexPass {
 
-    private final Matrix temp4x4 = new Matrix(4, 4), temp4x1 = new Matrix(4, 1);
-
     @Override
     public void pass(final PassParameters params) {
-        final Matrix pvm = params.vinProjectionViewMatrix.multiply(params.vinModelMatrix, this.temp4x4);
+        final Matrix m4x1 = new Matrix(4, 1);
+
+        params.vinMatrixV.multiply(params.vinMatrixM, params.voutMatrixVM);
+        params.vinMatrixPV.multiply(params.vinMatrixM, params.voutMatrixPVM);
 
         // Calculate point data
-        final float[] raw4x1 = this.temp4x1.getElements();
+        final float[] raw4x1 = m4x1.elements;
         raw4x1[0] = params.vinPoint[0];
         raw4x1[1] = params.vinPoint[1];
         raw4x1[2] = params.vinPoint[2];
         raw4x1[3] = 1.0f;
 
-        pvm.multiply(this.temp4x1, this.temp4x1);
+        params.voutMatrixPVM.multiply(m4x1, m4x1);
 
         final float z = -raw4x1[2];
         params.voutPoint[0] = params.inWidth * (raw4x1[0] / z) / 2.0f + params.inWidth / 2.0f;
@@ -32,9 +33,9 @@ public class VProjectionPass extends VertexPass {
             raw4x1[0] = params.vinNormal[0];
             raw4x1[1] = params.vinNormal[1];
             raw4x1[2] = params.vinNormal[2];
-            raw4x1[3] = 1.0f;
+            raw4x1[3] = 0.0f;
 
-            pvm.multiply(this.temp4x1, this.temp4x1);
+            params.voutMatrixVM.multiply(m4x1, m4x1);
             params.voutNormal[0] = raw4x1[0];
             params.voutNormal[1] = raw4x1[1];
             params.voutNormal[2] = raw4x1[2];

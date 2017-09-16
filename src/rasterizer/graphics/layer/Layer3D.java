@@ -27,7 +27,7 @@ public class Layer3D extends Layer {
     public boolean _render_async_threadsafe = true;
     public MeshMaterial _default_material = null;
     public VertexPass _default_vertex_pass = new VProjectionPass();
-    public FragmentPass _default_fragment_pass = new FColorPass(Color.WHITE);
+    public FragmentPass _default_fragment_pass = new FSolidColorPass(Color.WHITE);
 
     private float far, near;
     private final Matrix view, projection;
@@ -158,10 +158,10 @@ public class Layer3D extends Layer {
             params.inHeight = super.getHeight();
             params.inHasNormal = this._process_normal_data && mesh._process_normal_data && meshData.hasNormalData();
             params.inHasTexture = this._process_texture_data && mesh._process_texture_data && meshData.hasTextureData();
-            params.vinProjectionMatrix = this.projection;
-            params.vinViewMatrix = this.view;
-            params.vinModelMatrix = model.getModelMatrix();
-            params.vinProjectionViewMatrix = this.getProjectionView();
+            params.vinMatrixP = this.projection;
+            params.vinMatrixV = this.view;
+            params.vinMatrixM = model.getModelMatrix();
+            params.vinMatrixPV = this.getProjectionView();
             if(this._process_texture_data) {
                 params.finMaterial = mesh.getMaterial() == null ? this._default_material : mesh.getMaterial();
             }
@@ -251,7 +251,7 @@ public class Layer3D extends Layer {
                 params = params.copy();
             }
 
-            final float[] buffer = meshData.getBuffer();
+            final float[] data = meshData.getData(), buffer = meshData.getBuffer();
 
             // Render faces
             for(int idx = 0; idx < indices.length; ) {
@@ -324,11 +324,15 @@ public class Layer3D extends Layer {
                         params.finPoint[1] = j;
                         params.finPoint[2] = z;
 
+                        params.finPointUnprojected[0] = data[idx1] * pw1 + data[idx2] * pw2 + data[idx3] * pw3;
+                        params.finPointUnprojected[1] = data[idx1 + 1] * pw1 + data[idx2 + 1] * pw2 + data[idx3 + 1] * pw3;
+                        params.finPointUnprojected[2] = data[idx1 + 2] * pw1 + data[idx2 + 2] * pw2 + data[idx3 + 2] * pw3;
+
                         int offset = MeshData.POINT_LENGTH;
                         if(params.inHasNormal) {
-                            params.finNormal[0] = (buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3) * z;
-                            params.finNormal[1] = (buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3) * z;
-                            params.finNormal[2] = (buffer[idx1 + 2 + offset] * pw1 + buffer[idx2 + 2 + offset] * pw2 + buffer[idx3 + 2 + offset] * pw3) * z;
+                            params.finNormal[0] = buffer[idx1 + offset] * pw1 + buffer[idx2 + offset] * pw2 + buffer[idx3 + offset] * pw3;
+                            params.finNormal[1] = buffer[idx1 + 1 + offset] * pw1 + buffer[idx2 + 1 + offset] * pw2 + buffer[idx3 + 1 + offset] * pw3;
+                            params.finNormal[2] = buffer[idx1 + 2 + offset] * pw1 + buffer[idx2 + 2 + offset] * pw2 + buffer[idx3 + 2 + offset] * pw3;
 
                             offset += MeshData.NORMAL_LENGTH;
                         }
@@ -338,6 +342,8 @@ public class Layer3D extends Layer {
 
                             //offset += MeshData.TEXTURE_LENGTH;
                         }
+                        // Reset the fragment color to white
+                        params.foutColor[0] = params.foutColor[1] = params.foutColor[2] = params.foutColor[3] = 1.0f;
 
                         if(!fPass.pass(params) && (this._default_fragment_pass == null || !this._default_fragment_pass.pass(params))) {
                             // If the fragment pass fails, we cannot render this pixel

@@ -54,6 +54,14 @@ public final class MathUtils {
         return a < b ? (a < c ? a : c) : (b < c ? b : c);
     }
 
+    public static int clamp(final int value, final int min, final int max) {
+        return value < min ? min : value > max ? max : value;
+    }
+
+    public static float clamp(final float value, final float min, final float max) {
+        return value < min ? min : value > max ? max : value;
+    }
+
     public static int round(final float value) {
         return (int) (value > 0.0f ? (value + 0.5f) : (value - 0.5f));
     }
@@ -73,6 +81,10 @@ public final class MathUtils {
 
     public static float tan(final float radians) {
         return (float) Math.tan(radians); //TODO
+    }
+
+    public static float sqrt(final float value) {
+        return (float) Math.sqrt(value); //TODO
     }
 
     public static boolean equals(final float a, final float b) {

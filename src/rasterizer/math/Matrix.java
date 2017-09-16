@@ -7,8 +7,8 @@ import java.util.Arrays;
  */
 public class Matrix {
 
-    private final int rowCount, columnCount;
-    private final float[] elements;
+    public final int rowCount, columnCount;
+    public final float[] elements;
 
     public Matrix(final int rows, final int columns) {
         this(rows, columns, false);

@@ -5,7 +5,7 @@ package rasterizer.math;
  */
 public class Vector2f {
 
-    float x, y;
+    public float x, y;
 
     public Vector2f() {
         this(0.0f);
@@ -36,6 +36,10 @@ public class Vector2f {
         this.y = y;
     }
 
+    public Vector2f set(final Vector2f vector) {
+        return this.set(vector.x, vector.y);
+    }
+
     public Vector2f set(final float x, final float y) {
         this.x = x;
         this.y = y;
@@ -48,6 +52,14 @@ public class Vector2f {
 
     public boolean isZero() {
         return this.x == 0.0f && this.y == 0.0f;
+    }
+
+    public float getLength() {
+        return MathUtils.sqrt(this.getLengthSq());
+    }
+
+    public float getLengthSq() {
+        return this.x * this.x + this.y * this.y;
     }
 
     public Vector2f negate() {
@@ -66,35 +78,51 @@ public class Vector2f {
         return new Matrix(2, 1).fill(new float[]{this.x, this.y});
     }
 
-//    public Vector2f add(final Vector2f target){
-//        return this.add(target, this);
-//    }
-//
-//    public Vector2f add(final Vector2f target, final Vector2f out){
-//        return out.setElement(this.x + target.x, this.y + target.y);
-//    }
-//
-//    public Vector2f subtract(final Vector2f target){
-//        return this.subtract(target, this);
-//    }
-//
-//    public Vector2f subtract(final Vector2f target, final Vector2f out){
-//        return out.setElement(this.x - target.x, this.y - target.y);
-//    }
-//
-//    public Vector2f multiply(final Vector2f target){
-//        return this.multiply(target, this);
-//    }
-//
-//    public Vector2f multiply(final Vector2f target, final Vector2f out){
-//        return out.setElement(this.x * target.x, this.y * target.y);
-//    }
-//
-//    public Vector2f divide(final Vector2f target){
-//        return this.divide(target, this);
-//    }
-//
-//    public Vector2f divide(final Vector2f target, final Vector2f out){
-//        return out.setElement(this.x / target.x, this.y / target.y);
-//    }
+    @Override
+    public String toString() {
+        return "[Vector2f] x: " + this.x + ", y: " + this.y;
+    }
+    
+    ////
+
+    public static Vector2f add(final Vector2f a, final Vector2f b) {
+        return Vector2f.add(a, b, a);
+    }
+
+    public static Vector2f add(final Vector2f a, final Vector2f b, final Vector2f out) {
+        out.x = a.x + b.x;
+        out.y = a.y + b.y;
+        return out;
+    }
+
+    public static Vector2f subtract(final Vector2f a, final Vector2f b) {
+        return Vector2f.subtract(a, b, a);
+    }
+
+    public static Vector2f subtract(final Vector2f a, final Vector2f b, final Vector2f out) {
+        out.x = a.x - b.x;
+        out.y = a.y - b.y;
+        return out;
+    }
+
+    public static Vector2f multiply(final Vector2f a, final Vector2f b) {
+        return Vector2f.multiply(a, b, a);
+    }
+
+    public static Vector2f multiply(final Vector2f a, final Vector2f b, final Vector2f out) {
+        out.x = a.x * b.x;
+        out.y = a.y * b.y;
+        return out;
+    }
+
+    public static Vector2f divide(final Vector2f a, final Vector2f b) {
+        return Vector2f.divide(a, b, a);
+    }
+
+    public static Vector2f divide(final Vector2f a, final Vector2f b, final Vector2f out) {
+        out.x = a.x / b.x;
+        out.y = a.y / b.y;
+        return out;
+    }
+
 }

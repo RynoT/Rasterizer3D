@@ -1,5 +1,7 @@
 package rasterizer.graphics.target;
 
+import rasterizer.math.MathUtils;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -19,7 +21,7 @@ public class RenderTarget extends BufferedImage {
     public float _render_chunk_size = 0.25f; // Percentage size of each chunk (0.0f - 1.0f both inclusive). Percentage is of screen dimensions.
 
     private final float[] data;
-    private final float[] clearColor = new float[]{0.02f, 0.03f, 0.04f, 1.0f};
+    private final float[] clearColor = new float[]{5.0f / 255.0f, 10.0f / 255.0f, 15.0f / 255.0f, 1.0f};
 
     private boolean flushed = false;
     private final Rectangle flushBounds;
@@ -66,8 +68,8 @@ public class RenderTarget extends BufferedImage {
     }
 
     public void prepareRGBA(final int maxX, final int maxY, final int minX, final int minY) {
-        this.prepareRGBA(maxX, maxY);
-        this.prepareRGBA(minX, minY);
+        this.prepareRGBA(MathUtils.min(maxX, super.getWidth() - 1), MathUtils.min(maxY, super.getHeight() - 1));
+        this.prepareRGBA(MathUtils.max(minX, 0), MathUtils.max(minY, 0));
     }
 
     public void prepareRGBA(final int x, final int y) {

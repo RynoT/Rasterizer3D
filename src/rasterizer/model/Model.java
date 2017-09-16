@@ -49,7 +49,7 @@ public class Model {
     }
 
     public void setPosition(final float x, final float y) {
-        this.setPosition(x, y, this.position.getZ());
+        this.setPosition(x, y, this.position.z);
     }
 
     public void setPosition(final float x, final float y, final float z) {
@@ -58,7 +58,7 @@ public class Model {
     }
 
     public void setRotation(final float z) {
-        this.setRotation(this.rotation.getX(), this.rotation.getY(), z);
+        this.setRotation(this.rotation.x, this.rotation.y, z);
     }
 
     public void setRotation(final float x, final float y, final float z) {

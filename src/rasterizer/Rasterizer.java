@@ -15,8 +15,7 @@ import java.util.concurrent.RecursiveAction;
  */
 public class Rasterizer {
 
-    // Configuration for the rasterizer. Cannot be changed after the rasterizer has been made
-    private final Config config;
+    private final int targetFps;
 
     private final ForkJoinPool pool;
     private final BufferedImage buffer;
@@ -30,13 +29,12 @@ public class Rasterizer {
     private final List<Layer> layers = new ArrayList<>();
 
     public Rasterizer(final int width, final int height) {
-        this(width, height, new Config());
+        this(width, height, 60, Runtime.getRuntime().availableProcessors() - 1);
     }
 
-    public Rasterizer(final int width, final int height, final Config config) {
-        this.config = config;
-
-        this.pool = new ForkJoinPool(Math.max(config.threadCount, 1));
+    public Rasterizer(final int width, final int height, final int fps, final int threadCount) {
+        this.targetFps = fps;
+        this.pool = new ForkJoinPool(Math.max(threadCount, 1));
         this.buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
@@ -102,8 +100,8 @@ public class Rasterizer {
         // Calculate delta
         long time = System.nanoTime();
         long frameDuration = time - this.lastFrameTime;
-        if(this.config.fps > 0) {
-            final float requested = 1000.0f / this.config.fps; //millis
+        if(this.targetFps > 0) {
+            final float requested = 1000.0f / this.targetFps; //millis
             final float difference = requested - (frameDuration * 1e-6f);
             if(difference > 0.0f) {
                 final long millis = (long) difference;
@@ -128,15 +126,6 @@ public class Rasterizer {
             this.averageFpsTotal -= this.averageFps;
             this.averageFpsCounter -= 1.0f;
         }
-    }
-
-    public static class Config {
-
-        // FPS to render at (<= 0 is no cap)
-        public int fps = 60;
-
-        // Rendering thread count (<= 1 is 1)
-        public int threadCount = Runtime.getRuntime().availableProcessors() - 1;
     }
 
     private class RenderAction extends RecursiveAction {
