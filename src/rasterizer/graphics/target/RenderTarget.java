@@ -26,7 +26,7 @@ public class RenderTarget extends BufferedImage {
     private boolean flushed = false;
     private final Rectangle flushBounds;
 
-    private final Graphics2D graphics;
+    protected final Graphics2D graphics;
 
     public RenderTarget(final int width, final int height) {
         super(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -38,14 +38,14 @@ public class RenderTarget extends BufferedImage {
         this.graphics = super.createGraphics();
     }
 
-    public static Color asColor(final float[] rgba) {
-        assert rgba != null && rgba.length == 4;
-        return new Color(rgba[0], rgba[1], rgba[2], rgba[3]);
-    }
-
     public void dirty() {
         this.flushed = false;
         this.flushBounds.setBounds(0, 0, super.getWidth(), super.getHeight());
+    }
+
+    public void setClearColor(final float[] rgba) {
+        assert rgba != null && rgba.length == 4;
+        System.arraycopy(rgba, 0, this.clearColor, 0, rgba.length);
     }
 
     public float[] getRGBA(final int x, final int y) {
@@ -60,11 +60,6 @@ public class RenderTarget extends BufferedImage {
                 * RenderTarget.RGBA_FLOAT_LENGTH, out, 0, out.length);
         this.flushed = false;
         return out;
-    }
-
-    public void setClearColor(final float[] rgba) {
-        assert rgba != null && rgba.length == 4;
-        System.arraycopy(rgba, 0, this.clearColor, 0, rgba.length);
     }
 
     public void prepareRGBA(final int maxX, final int maxY, final int minX, final int minY) {
@@ -119,10 +114,8 @@ public class RenderTarget extends BufferedImage {
         }
         this.flushed = true;
 
-        final Graphics2D g2d = super.createGraphics();
-        g2d.setBackground(new Color(rgba[0], rgba[1], rgba[2], rgba[3]));
-        g2d.clearRect(0, 0, super.getWidth(), super.getHeight());
-        g2d.dispose();
+        this.graphics.setBackground(new Color(rgba[0], rgba[1], rgba[2], rgba[3]));
+        this.graphics.clearRect(0, 0, super.getWidth(), super.getHeight());
     }
 
     public void flushRGBA() {
@@ -136,6 +129,7 @@ public class RenderTarget extends BufferedImage {
             final WritableRaster raster = super.getRaster();
 
             final int x = this.flushBounds.x, y = this.flushBounds.y, w = this.flushBounds.width, h = this.flushBounds.height;
+
             for(int j = y; j < y + h; j++) {
                 if(j >= super.getHeight()) {
                     break;

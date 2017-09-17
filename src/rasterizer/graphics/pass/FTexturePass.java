@@ -3,12 +3,12 @@ package rasterizer.graphics.pass;
 /**
  * Created by Ryan on 14/09/2017.
  */
-public class FTexturePass extends FragmentPass {
+public class FTexturePass implements FragmentPass {
 
     @Override
     public boolean pass(final PassParameters params) {
         if(!params.inHasTexture || params.finMaterial == null) {
-            return super._on_fail_return;
+            return false;
         }
         final float[] pixels = params.finMaterial.getPixels();
         final int index = params.finMaterial.getIndex(params.finTexture[0], params.finTexture[1]);

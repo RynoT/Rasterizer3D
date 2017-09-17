@@ -5,7 +5,7 @@ import rasterizer.math.Matrix;
 /**
  * Created by Ryan on 15/09/2017.
  */
-public class VProjectionPass extends VertexPass {
+public class VProjectionPass implements VertexPass {
 
     @Override
     public void pass(final PassParameters params) {

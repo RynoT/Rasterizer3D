@@ -140,15 +140,15 @@ public class Matrix {
         assert out.rowCount == this.rowCount && out.columnCount == target.columnCount;
 
         final float[] tmp = new float[out.elements.length];
-        for(int j = 0; j < this.rowCount; j++) {
-            for(int i = 0; i < target.columnCount; i++) {
-                float value = 0.0f;
-                for(int k = 0; k < this.columnCount; k++) {
-                    value += this.elements[k + j * this.columnCount]
-                            * target.elements[i + k * target.columnCount];
-                }
-                tmp[i + j * out.columnCount] = value;
+        for(int l = 0, len = this.rowCount * target.columnCount; l < len; l++) {
+            final int i = l % target.columnCount, j = l / target.columnCount;
+
+            float value = 0.0f;
+            for(int k = 0; k < this.columnCount; k++) {
+                value += this.elements[k + j * this.columnCount]
+                        * target.elements[i + k * target.columnCount];
             }
+            tmp[i + j * out.columnCount] = value;
         }
         return out.fill(tmp);
     }
@@ -160,10 +160,9 @@ public class Matrix {
     public Matrix transpose(final Matrix out) {
         assert out.rowCount == this.columnCount && out.columnCount == this.rowCount;
         final float[] tmp = new float[this.elements.length];
-        for(int i = 0; i < this.elements.length; i++) {
-            final int x = i / this.columnCount;
-            final int y = i % this.rowCount;
-            tmp[y + x * out.columnCount] = this.elements[x + y * this.columnCount];
+        for(int l = 0; l < this.elements.length; l++) {
+            final int i = l / this.columnCount, j = l % this.rowCount;
+            tmp[j + i * out.columnCount] = this.elements[i + j * this.columnCount];
         }
         return out.fill(tmp);
     }
@@ -251,12 +250,6 @@ public class Matrix {
                 0.0f, 0.0f, -2.0f / (far - near), -(far + near) / (far - near),
                 0.0f, 0.0f, 0.0f, 1.0f
         });
-//        return matrix.fill(new float[]{
-//                2.0f / (width - 1.0f), 0.0f, 0.0f, -1.0f,
-//                0.0f, -2.0f / (height - 1.0f), 0.0f, 1.0f,
-//                0.0f, 0.0f, 2.0f / (far - near), (near + far) / (near - far),
-//                0.0f, 0.0f, 0.0f, 1.0f
-//        });
     }
 
     // Set provided matrix to a perspective matrix. Returns provided matrix.
@@ -274,17 +267,4 @@ public class Matrix {
         });
     }
 
-    private static class LocalTempMatrix extends ThreadLocal<Matrix> {
-
-        private final Matrix temp;
-
-        private LocalTempMatrix(final int rows, final int columns){
-            this.temp = new Matrix(rows, columns);
-        }
-
-        @Override
-        protected Matrix initialValue() {
-            return this.temp;
-        }
-    }
 }

@@ -12,12 +12,17 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RecursiveAction;
+import java.util.function.Function;
 
 /**
  * Created by Ryan on 12/09/2017.
  */
 public class Layer3D extends Layer {
+
+    public static final float DEFAULT_FAR = 1000.0f;
+    public static final float DEFAULT_NEAR = 0.001f;
 
     public boolean _render3d = true;
     public boolean _cull_faces = true; //front faces must be CCW if enabled
@@ -44,6 +49,8 @@ public class Layer3D extends Layer {
         this.view = new Matrix(4, 4, true);
         this.projection = new Matrix(4, 4);
         this.zBuffer = new float[super.getWidth() * super.getHeight()];
+
+        this.setToOrthographicProjection(Layer3D.DEFAULT_FAR, Layer3D.DEFAULT_NEAR);
     }
 
     public void addModel(final Model model) {

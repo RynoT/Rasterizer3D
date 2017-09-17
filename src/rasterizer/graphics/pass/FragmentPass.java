@@ -3,32 +3,30 @@ package rasterizer.graphics.pass;
 /**
  * Created by Ryan on 14/09/2017.
  */
-public abstract class FragmentPass {
+public interface FragmentPass {
 
-    public boolean _on_fail_return = false;
+    boolean pass(final PassParameters params);
 
-    public abstract boolean pass(final PassParameters params);
+    static FragmentPass chain(final FragmentPass... passes) {
+        assert passes != null;
+        class Chain implements FragmentPass {
 
-    public static FragmentPass chain(final FragmentPass... passes) {
-        return new Chain(passes);
-    }
+            private final FragmentPass[] passes;
 
-    private static class Chain extends FragmentPass {
-
-        private final FragmentPass[] passes;
-
-        private Chain(final FragmentPass... passes) {
-            this.passes = passes;
-        }
-
-        @Override
-        public boolean pass(final PassParameters params) {
-            for(final FragmentPass pass : this.passes) {
-                if(!pass.pass(params)) {
-                    return false;
-                }
+            private Chain(final FragmentPass[] passes) {
+                this.passes = passes;
             }
-            return true;
+
+            @Override
+            public boolean pass(final PassParameters params) {
+                for(final FragmentPass pass : this.passes) {
+                    if(!pass.pass(params)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
         }
+        return new Chain(passes);
     }
 }

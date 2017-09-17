@@ -5,7 +5,7 @@ import java.awt.*;
 /**
  * Created by Ryan on 14/09/2017.
  */
-public class FSolidColorPass extends FragmentPass {
+public class FSolidColorPass implements FragmentPass {
 
     private final float[] rgba;
 

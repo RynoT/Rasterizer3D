@@ -1,15 +1,12 @@
 import rasterizer.Rasterizer;
 import rasterizer.graphics.layer.Layer3D;
 import rasterizer.graphics.light.PointLight;
-import rasterizer.graphics.pass.FLightPass;
-import rasterizer.graphics.pass.FNormalColorPass;
-import rasterizer.graphics.pass.FTexturePass;
-import rasterizer.graphics.pass.FragmentPass;
+import rasterizer.graphics.pass.*;
 import rasterizer.math.MathUtils;
 import rasterizer.math.Vector3f;
 import rasterizer.model.Model;
 import rasterizer.model.mesh.MeshMaterial;
-import rasterizer.model.mesh.basic.CubeMesh;
+import rasterizer.model.mesh.procedural.ProceduralMeshFactory;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -27,22 +24,24 @@ public class Canvas extends JFrame {
 
     private Canvas() {
         final FTexturePass texturePass = new FTexturePass();
-        texturePass._on_fail_return = true;
 
         final FLightPass lightPass = new FLightPass(1);
-        lightPass.setLight(0, new PointLight(new Vector3f(0.0f, 0.0f, 0.0f)).setColor(new float[]{1.0f, 0.0f, 0.0f, 1.0f}));
+        lightPass.setLight(0, new PointLight(new Vector3f(-100.0f, 0.0f, 0.0f)).setColor(new float[]{1.0f, 0.0f, 0.0f, 1.0f}));
 
-        final FragmentPass fragPass = FragmentPass.chain(texturePass, lightPass);
+        final FragmentPass fragPass = FragmentPass.chain(texturePass);
 
         this.rasterizer = new Rasterizer(Canvas.WIDTH, Canvas.HEIGHT);
 
         final Layer3D layer = new Layer3D(Canvas.WIDTH, Canvas.HEIGHT);
+        //layer._process_texture_data = false;
         //layer._display_flush = true;
         //layer._display_chunks = true;
         //layer.setToPerspectiveProjection(45.0f, 100000.0f, 0.1f);
-        layer.setToOrthographicProjection(1000.0f, 0.1f);
 
-        final Model cubeModel = new Model(new CubeMesh(300.0f, 300.0f, 300.0f));
+        //final Model cubeModel = new Model(ProceduralMeshFactory.createCylinder(100.0f, 200.0f, 20, 20));
+        //final Model cubeModel = new Model(ProceduralMeshFactory.createCone(100.0f, 200.0f, 20));
+        final Model cubeModel = new Model(ProceduralMeshFactory.createSphere(100.0f, 20, 20));
+        //final Model cubeModel = new Model(ProceduralMeshFactory.createCube(300.0f, 300.0f, 300.0f));
         //final Model cubeModel = new Model(new QuadMesh(500, 500, true));
         try {
             cubeModel.getMesh().setMaterial(new MeshMaterial(ImageIO.read(Canvas.class.getResource("media/crate2.png"))));

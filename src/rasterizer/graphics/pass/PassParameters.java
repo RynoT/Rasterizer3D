@@ -8,7 +8,7 @@ import rasterizer.model.mesh.MeshMaterial;
 /**
  * Created by Ryan on 15/09/2017.
  */
-public class PassParameters {
+public final class PassParameters {
 
     public boolean _skip_lighting = false;
 

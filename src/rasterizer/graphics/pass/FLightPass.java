@@ -7,7 +7,7 @@ import rasterizer.math.Vector3f;
 /**
  * Created by Ryan on 15/09/2017.
  */
-public class FLightPass extends FragmentPass {
+public class FLightPass implements FragmentPass {
 
     private final Light[] lights;
 
@@ -33,7 +33,7 @@ public class FLightPass extends FragmentPass {
             return true;
         }
         if(!params.inHasNormal) {
-            return super._on_fail_return;
+            return false;
         }
         final Vector3f normal = new Vector3f(params.finNormal).normalize();
         final Vector3f inPoint = Vector3f.multiply(new Vector3f(params.finPointUnprojected), params.voutMatrixVM);
@@ -44,7 +44,7 @@ public class FLightPass extends FragmentPass {
             final float[] lightColor = light.getColor();
 
             final Vector3f lightDir = new Vector3f();
-            Vector3f.multiply(light.getPosition(), params.voutMatrixVM, lightDir);
+            Vector3f.multiply(light.getPosition(), params.vinMatrixV, lightDir);
             Vector3f.subtract(lightDir, inPoint);
             lightDir.normalize();
 

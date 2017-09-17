@@ -6,12 +6,12 @@ import rasterizer.math.Vector3f;
 /**
  * Created by Ryan on 16/09/2017.
  */
-public class FNormalColorPass extends FragmentPass {
+public class FNormalColorPass implements FragmentPass {
 
     @Override
     public boolean pass(final PassParameters params) {
         if(!params.inHasNormal) {
-            return super._on_fail_return;
+            return false;
         }
         final Vector3f normal = new Vector3f(params.finNormal).normalize();
         params.foutColor[0] = (params.foutColor[0] + MathUtils.clamp(normal.x < 0.0f ? -normal.x : normal.x, 0.0f, 1.0f)) * 0.5f;

@@ -6,8 +6,10 @@ import rasterizer.graphics.layer.Layer3D;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
 /**
@@ -20,6 +22,9 @@ public class Rasterizer {
     private final ForkJoinPool pool;
     private final BufferedImage buffer;
     private Color backgroundColor = new Color(5, 10, 15);
+
+    private long pauseTime;
+    private boolean paused = false;
 
     private long lastFrameTime = 0L;
     private float delta, fps;
@@ -66,35 +71,53 @@ public class Rasterizer {
         this.backgroundColor = color;
     }
 
+    public void play() {
+        if(!this.paused) {
+            return;
+        }
+        this.paused = false;
+        this.lastFrameTime += System.nanoTime() - this.pauseTime;
+    }
+
+    public void pause() {
+        if(this.paused) {
+            return;
+        }
+        this.paused = true;
+        this.pauseTime = System.nanoTime();
+    }
+
     public void render(final Graphics2D g2d) {
         if(this.lastFrameTime == 0L) {
             this.lastFrameTime = System.nanoTime();
         }
+        if(this.paused) {
+            g2d.drawImage(this.buffer, 0, 0, null);
+            return;
+        }
 
         // Render
-        final Graphics2D bg2d = this.buffer.createGraphics();
-        bg2d.setBackground(this.backgroundColor);
-        bg2d.clearRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
+        if(!this.pool.isShutdown()) {
+            final Graphics2D bg2d = this.buffer.createGraphics();
+            bg2d.setBackground(this.backgroundColor);
+            bg2d.clearRect(0, 0, this.buffer.getWidth(), this.buffer.getHeight());
 
-        final RenderAction[] actions = new RenderAction[this.layers.size()];
-        for(int i = 0; i < this.layers.size(); i++) {
-            this.pool.execute(actions[i] = new RenderAction(this.layers.get(i)));
-        }
-        // Wait for render to complete and then draw to back
-        for(final RenderAction action : actions) {
-            action.join();
-
-            if(action.actions != null) {
-                for(final RecursiveAction next : action.actions) {
-                    next.join();
-                }
+            final RenderAction[] actions = new RenderAction[this.layers.size()];
+            for(int i = 0; i < this.layers.size(); i++) {
+                this.pool.execute(actions[i] = new RenderAction(this.layers.get(i)));
             }
+            // Wait for render to complete and then draw to back
+            for(final RenderAction action : actions) {
+                action.join();
 
-            action.layer.render(bg2d);
+                // Ensure any sub actions have also finished
+                if(action.actions != null) {
+                    action.actions.forEach(ForkJoinTask::join);
+                }
+                action.layer.render(bg2d);
+            }
+            bg2d.dispose();
         }
-
-        //TODO ditch the back buffer
-        bg2d.dispose();
         g2d.drawImage(this.buffer, 0, 0, null);
 
         // Calculate delta
